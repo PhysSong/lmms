@@ -589,7 +589,7 @@ void MainWindow::finalize()
 
 int MainWindow::addWidgetToToolBar( QWidget * _w, int _row, int _col )
 {
-	int col = ( _col == -1 ) ? m_toolBarLayout->columnCount() + 7 : _col;
+	int col = ( _col == -1 ) ? m_toolBarLayout->columnCount() + 6 : _col;
 	if( _w->height() > 32 || _row == -1 )
 	{
 		m_toolBarLayout->addWidget( _w, 0, col, 2, 1 );
@@ -607,7 +607,7 @@ int MainWindow::addWidgetToToolBar( QWidget * _w, int _row, int _col )
 void MainWindow::addSpacingToToolBar( int _size )
 {
 	m_toolBarLayout->setColumnMinimumWidth( m_toolBarLayout->columnCount() +
-								7, _size );
+								6, _size );
 }
 
 SubWindow* MainWindow::addWindowedWidget(QWidget *w, Qt::WindowFlags windowFlags)
@@ -1077,7 +1077,6 @@ void MainWindow::toggleFxMixerWin()
 {
 	toggleWindow( gui->fxMixerView() );
 }
-
 
 void MainWindow::updateViewMenu()
 {
