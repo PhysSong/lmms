@@ -61,6 +61,7 @@ SET(LMMS_PLUGIN_LIST
 	stereo_enhancer
 	stereo_matrix
 	stk
+	triple_oscillator2
 	vst_base
 	vestige
 	VstEffect
