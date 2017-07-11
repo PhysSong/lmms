@@ -407,7 +407,7 @@ public:
 	{
 	}
 	float getRoundedValue() const;
-	int getDigitCount() const;
+	float getDigitCount();
 	defaultTypedMethods(float);
 
 } ;

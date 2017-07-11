@@ -61,7 +61,6 @@ public:
 
 private slots:
 	void changeControl();
-	void changeSampleRate();
 
 private:
 	ReverbSCEffect* m_effect;

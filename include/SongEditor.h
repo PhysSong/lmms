@@ -81,7 +81,6 @@ public slots:
 	void setEditModeSelect();
 
 	void updatePosition( const MidiTime & t );
-	void updatePositionLine();
 
 protected:
 	virtual void closeEvent( QCloseEvent * ce );
@@ -153,9 +152,6 @@ public:
 
 	SongEditor* m_editor;
 
-protected:
-	virtual void resizeEvent( QResizeEvent * event );
-
 protected slots:
 	void play();
 	void record();
@@ -166,7 +162,6 @@ protected slots:
 
 signals:
 	void playTriggered();
-	void resized();
 
 private:
 	QAction* m_addBBTrackAction;

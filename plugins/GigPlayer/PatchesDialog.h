@@ -30,6 +30,7 @@
 #include "LcdSpinBox.h"
 #include "GigPlayer.h"
 
+#include <fluidsynth.h>
 #include <QWidget>
 #include <QLabel>
 

@@ -52,7 +52,7 @@ private:
 	sampleFrame* m_buffer;
 	int m_maxLength;
 	float m_length;
-	int m_writeIndex;
+	int m_index;
 	float m_feedback;
 	float m_maxTime;
 };

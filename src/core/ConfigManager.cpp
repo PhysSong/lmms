@@ -63,12 +63,7 @@ ConfigManager::ConfigManager() :
 
 	// If we're in development (lmms is not installed) let's get the source and
 	// binary directories by reading the CMake Cache
-	QDir appPath = qApp->applicationDirPath();
-	// If in tests, get parent directory
-	if (appPath.dirName() == "tests") {
-		appPath.cdUp();
-	}
-	QFile cmakeCache(appPath.absoluteFilePath("CMakeCache.txt"));
+	QFile cmakeCache(qApp->applicationDirPath() + "/CMakeCache.txt");
 	if (cmakeCache.exists()) {
 		cmakeCache.open(QFile::ReadOnly);
 		QTextStream stream(&cmakeCache);
@@ -282,8 +277,7 @@ void ConfigManager::addRecentlyOpenedProject( const QString & file )
 {
 	QFileInfo recentFile( file );
 	if( recentFile.suffix().toLower() == "mmp" ||
-		recentFile.suffix().toLower() == "mmpz" ||
-		recentFile.suffix().toLower() == "mpt" )
+			recentFile.suffix().toLower() == "mmpz" )
 	{
 		m_recentlyOpenedProjects.removeAll( file );
 		if( m_recentlyOpenedProjects.size() > 50 )
@@ -315,16 +309,6 @@ const QString & ConfigManager::value( const QString & cls,
 	}
 	static QString empty;
 	return empty;
-}
-
-
-
-const QString & ConfigManager::value( const QString & cls,
-				      const QString & attribute,
-				      const QString & defaultVal ) const
-{
-	const QString & val = value( cls, attribute );
-	return val.isEmpty() ? defaultVal : val;
 }
 
 

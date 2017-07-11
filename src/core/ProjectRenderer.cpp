@@ -30,7 +30,6 @@
 
 #include "AudioFileWave.h"
 #include "AudioFileOgg.h"
-#include "AudioFileMP3.h"
 
 #ifdef LMMS_HAVE_SCHED_H
 #include "sched.h"
@@ -47,15 +46,6 @@ const ProjectRenderer::FileEncodeDevice ProjectRenderer::fileEncodeDevices[] =
 					".ogg",
 #ifdef LMMS_HAVE_OGGVORBIS
 					&AudioFileOgg::getInst
-#else
-					NULL
-#endif
-									},
-	{ ProjectRenderer::MP3File,
-		QT_TRANSLATE_NOOP( "ProjectRenderer", "Compressed MP3-File (*.mp3)" ),
-					".mp3",
-#ifdef LMMS_HAVE_MP3LAME
-					&AudioFileMP3::getInst
 #else
 					NULL
 #endif
@@ -182,11 +172,10 @@ void ProjectRenderer::run()
 	m_progress = 0;
 	std::pair<MidiTime, MidiTime> exportEndpoints = Engine::getSong()->getExportEndpoints();
 	tick_t startTick = exportEndpoints.first.getTicks();
-	tick_t endTick = exportEndpoints.second.getTicks();
-	tick_t lengthTicks = endTick - startTick;
+	tick_t lengthTicks = exportEndpoints.second.getTicks() - startTick;
 
 	// Continually track and emit progress percentage to listeners
-	while( exportPos.getTicks() < endTick &&
+	while( Engine::getSong()->isExportDone() == false &&
 				Engine::getSong()->isExporting() == true
 							&& !m_abort )
 	{

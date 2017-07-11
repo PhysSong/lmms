@@ -113,7 +113,6 @@ void LfoController::updateValueBuffer()
 	}
 
 	m_currentPhase = absFraction( phase - m_phaseOffset );
-	m_bufferLastUpdated = s_periods;
 }
 
 void LfoController::updatePhase()

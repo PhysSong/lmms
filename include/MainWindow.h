@@ -110,7 +110,8 @@ public:
 	enum SessionState
 	{
 		Normal,
-		Recover
+		Recover,
+		Limited,
 	};
 
 	void setSession( SessionState session )
@@ -142,7 +143,7 @@ public:
 		return m_keyMods.m_alt;
 	}
 
-	static void saveWidgetState( QWidget * _w, QDomElement & _de );
+	static void saveWidgetState( QWidget * _w, QDomElement & _de, QSize const & sizeIfInvisible = QSize(0, 0) );
 	static void restoreWidgetState( QWidget * _w, const QDomElement & _de );
 
 public slots:
