@@ -153,7 +153,6 @@ public:
 
 public slots:
 	void updateTcos();
-	void setPlayingTcos( bool isPlaying );
 
 private:
 	FloatModel m_volumeModel;

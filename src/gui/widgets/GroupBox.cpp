@@ -41,6 +41,8 @@ GroupBox::GroupBox( const QString & _caption, QWidget * _parent ) :
 	m_caption( _caption ),
 	m_titleBarHeight( 11 )
 {
+	updatePixmap();
+
 	m_led = new PixmapButton( this, _caption );
 	m_led->setCheckable( true );
 	m_led->move( 3, 0 );
@@ -82,22 +84,60 @@ void GroupBox::mousePressEvent( QMouseEvent * _me )
 
 
 
-void GroupBox::paintEvent( QPaintEvent * pe )
+void GroupBox::resizeEvent( QResizeEvent * _ev )
 {
-	QPainter p( this );
+	updatePixmap();
+	QWidget::resizeEvent( _ev );
+}
 
-	// Draw background
-	p.fillRect( 0, 0, width() - 1, height() - 1, p.background() );
+
+
+void GroupBox::updatePixmap()
+{
+	QColor bg_color = QApplication::palette().color( QPalette::Active,
+							QPalette::Background );
+	QPixmap pm( size() );
+	pm.fill( bg_color/*.dark( 132 )*/ );
+
+	QPainter p( &pm );
 
 	// outer rect
-	p.setPen( p.background().color().dark( 150 ) );
+	p.setPen( bg_color.dark( 150 ) );
 	p.drawRect( 0, 0, width() - 1, height() - 1 );
 
-	// draw line below titlebar
-	p.fillRect( 1, 1, width() - 2, m_titleBarHeight + 1, p.background().color().darker( 150 ) );
+	// brighter line at bottom/right
+	p.setPen( bg_color.light( 150 ) );
+	p.drawLine( width() - 1, 0, width() - 1, height() - 1 );
+	p.drawLine( 0, height() - 1, width() - 1, height() - 1 );
 
-	// draw text
+	// draw groupbox-titlebar
+	QLinearGradient g( 0, 0, 0, m_titleBarHeight );
+	g.setColorAt( 0, bg_color.darker( 250 ) );
+	g.setColorAt( 0.1, bg_color.lighter( 120 ) );
+	g.setColorAt( 1, bg_color.darker( 250 ) );
+	p.fillRect( 2, 2, width() - 4, m_titleBarHeight, g );
+
+	// draw line below titlebar
+	p.setPen( bg_color.dark( 400 ) );
+	p.drawLine( 1, m_titleBarHeight + 1, width() - 3, m_titleBarHeight + 1 );
+
+	// black inner rect
+	p.drawRect( 1, 1, width() - 3, height() - 3 );
+
+
+	//p.setPen( QColor( 255, 255, 255 ) );
 	p.setPen( palette().color( QPalette::Active, QPalette::Text ) );
 	p.setFont( pointSize<8>( font() ) );
 	p.drawText( 22, m_titleBarHeight, m_caption );
+
+	QPalette pal = palette();
+	pal.setBrush( backgroundRole(), QBrush( pm ) );
+	setPalette( pal );
 }
+
+
+
+
+
+
+

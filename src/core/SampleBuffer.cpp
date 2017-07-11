@@ -1411,35 +1411,25 @@ void SampleBuffer::setReversed( bool _on )
 
 
 
-QString SampleBuffer::tryToMakeRelative( const QString & file )
+QString SampleBuffer::tryToMakeRelative( const QString & _file )
 {
-	if( QFileInfo( file ).isRelative() == false )
+	if( QFileInfo( _file ).isRelative() == false )
 	{
-		QString f = QString( file ).replace( QDir::separator(), '/' );
-
-		// First, look in factory samples
-		// Isolate "samples/" from "data:/samples/"
-		QString samplesSuffix = ConfigManager::inst()->factorySamplesDir().mid( ConfigManager::inst()->dataDir().length() );
-
-		// Iterate over all valid "data:/" searchPaths
-		for ( const QString & path : QDir::searchPaths( "data" ) )
-		{
-			QString samplesPath = QString( path + samplesSuffix ).replace( QDir::separator(), '/' );
-			if ( f.startsWith( samplesPath ) )
-			{
-				return QString( f ).mid( samplesPath.length() );
-			}
-		}
-
-		// Next, look in user samples
+		QString f = QString( _file ).replace( QDir::separator(), '/' );
+		QString fsd = ConfigManager::inst()->factorySamplesDir();
 		QString usd = ConfigManager::inst()->userSamplesDir();
+		fsd.replace( QDir::separator(), '/' );
 		usd.replace( QDir::separator(), '/' );
-		if( f.startsWith( usd ) )
+		if( f.startsWith( fsd ) )
+		{
+			return QString( f ).mid( fsd.length() );
+		}
+		else if( f.startsWith( usd ) )
 		{
 			return QString( f ).mid( usd.length() );
 		}
 	}
-	return file;
+	return _file;
 }
 
 

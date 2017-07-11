@@ -1081,6 +1081,7 @@ void sf2InstrumentView::showFileDialog()
 	types << tr( "SoundFont2 Files (*.sf2)" );
 	ofd.setNameFilters( types );
 
+	QString dir;
 	if( k->m_filename != "" )
 	{
 		QString f = SampleBuffer::tryToMakeAbsolute( k->m_filename );

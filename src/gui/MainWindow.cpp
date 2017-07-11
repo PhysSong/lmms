@@ -664,6 +664,10 @@ void MainWindow::resetWindowTitle()
 	{
 		title += " - " + tr( "Recover session. Please save your work!" );
 	}
+	if( getSession() == Limited )
+	{
+		title += " - " + tr( "Automatic backup disabled. Remember to save your work!" );
+	}
 	setWindowTitle( title + " - " + tr( "LMMS %1" ).arg( LMMS_VERSION ) );
 }
 
@@ -734,7 +738,7 @@ void MainWindow::clearKeyModifiers()
 
 
 
-void MainWindow::saveWidgetState( QWidget * _w, QDomElement & _de )
+void MainWindow::saveWidgetState( QWidget * _w, QDomElement & _de, QSize const & sizeIfInvisible )
 {
 	// If our widget is the main content of a window (e.g. piano roll, FxMixer, etc), 
 	// we really care about the position of the *window* - not the position of the widget within its window
@@ -757,7 +761,7 @@ void MainWindow::saveWidgetState( QWidget * _w, QDomElement & _de )
 	_de.setAttribute( "x", normalGeom.x() );
 	_de.setAttribute( "y", normalGeom.y() );
 
-	QSize sizeToStore = normalGeom.size();
+	QSize sizeToStore = visible ? normalGeom.size() : sizeIfInvisible;
 	_de.setAttribute( "width", sizeToStore.width() );
 	_de.setAttribute( "height", sizeToStore.height() );
 }
@@ -769,8 +773,8 @@ void MainWindow::restoreWidgetState( QWidget * _w, const QDomElement & _de )
 {
 	QRect r( qMax( 1, _de.attribute( "x" ).toInt() ),
 			qMax( 1, _de.attribute( "y" ).toInt() ),
-			qMax( _w->sizeHint().width(), _de.attribute( "width" ).toInt() ),
-			qMax( _w->minimumHeight(), _de.attribute( "height" ).toInt() ) );
+			qMax( 100, _de.attribute( "width" ).toInt() ),
+			qMax( 100, _de.attribute( "height" ).toInt() ) );
 	if( _de.hasAttribute( "visible" ) && !r.isNull() )
 	{
 		// If our widget is the main content of a window (e.g. piano roll, FxMixer, etc), 
@@ -876,8 +880,8 @@ void MainWindow::updateRecentlyOpenedProjectsMenu()
 	m_recentlyOpenedProjectsMenu->clear();
 	QStringList rup = ConfigManager::inst()->recentlyOpenedProjects();
 
-//	The file history goes 50 deep but we only show the 15
-//	most recent ones that we can open and omit .mpt files.
+//	The file history goes 30 deep but we only show the 15
+//	most recent ones that we can open.
 	int shownInMenu = 0;
 	for( QStringList::iterator it = rup.begin(); it != rup.end(); ++it )
 	{
@@ -885,11 +889,6 @@ void MainWindow::updateRecentlyOpenedProjectsMenu()
 		if ( recentFile.exists() && 
 				*it != ConfigManager::inst()->recoveryFile() )
 		{
-			if( recentFile.suffix().toLower() == "mpt" )
-			{
-				continue;
-			}
-
 			m_recentlyOpenedProjectsMenu->addAction(
 					embed::getIconPixmap( "project_file" ), *it );
 #ifdef LMMS_BUILD_APPLE
@@ -1375,8 +1374,8 @@ void MainWindow::closeEvent( QCloseEvent * _ce )
 	if( mayChangeProject(true) )
 	{
 		// delete recovery file
-		if( ConfigManager::inst()->
-				value( "ui", "enableautosave" ).toInt() )
+		if( ConfigManager::inst()->value( "ui", "enableautosave" ).toInt()
+			&& getSession() != Limited )
 		{
 			sessionCleanup();
 			_ce->accept();
@@ -1563,7 +1562,8 @@ void MainWindow::autoSave()
 // from the timer where we need to do extra tests.
 void MainWindow::runAutoSave()
 {
-	if( ConfigManager::inst()->value( "ui", "enableautosave" ).toInt() )
+	if( ConfigManager::inst()->value( "ui", "enableautosave" ).toInt() &&
+		getSession() != Limited )
 	{
 		autoSave();
 		autoSaveTimerReset();  // Reset timer

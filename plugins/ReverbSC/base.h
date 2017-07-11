@@ -25,7 +25,7 @@ typedef struct sp_auxdata {
 
 typedef struct sp_data { 
     SPFLOAT *out;
-    uint32_t sr;
+    int sr;
     int nchan;
     unsigned long len;
     unsigned long pos;
