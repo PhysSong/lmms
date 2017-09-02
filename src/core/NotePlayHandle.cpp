@@ -72,6 +72,7 @@ NotePlayHandle::NotePlayHandle( InstrumentTrack* instrumentTrack,
 	m_muted( false ),
 	m_patternTrack( nullptr ),
 	m_origTempo( Engine::getSong()->getTempo() ),
+	m_curTempo( Engine::getSong()->getTempo() ),
 	m_origBaseNote( instrumentTrack->baseNote() ),
 	m_frequency( 0 ),
 	m_unpitchedFrequency( 0 ),
@@ -579,7 +580,7 @@ void NotePlayHandle::processTimePos(const TimePos& time, float pitchValue, bool 
 
 
 
-void NotePlayHandle::resize( const bpm_t _new_tempo )
+void NotePlayHandle::resize(const bpm_t newTempo)
 {
 	if (origin() == Origin::MidiInput ||
 		(origin() == Origin::NoteStacking && m_parent->origin() == Origin::MidiInput))
@@ -590,15 +591,15 @@ void NotePlayHandle::resize( const bpm_t _new_tempo )
 		return;
 	}
 
-	double completed = m_totalFramesPlayed / (double) m_frames;
-	double new_frames = m_origFrames * m_origTempo / (double) _new_tempo;
+	double framesLeft = m_frames - m_totalFramesPlayed;
+	double new_frames = m_totalFramesPlayed + (framesLeft * m_curTempo / (double) newTempo);
 	m_frames = (f_cnt_t)new_frames;
-	m_totalFramesPlayed = (f_cnt_t)( completed * new_frames );
 
 	for (const auto& subNote : m_subNotes)
 	{
-		subNote->resize(_new_tempo);
+		subNote->resize(newTempo);
 	}
+	m_curTempo = newTempo;
 }
 
 
