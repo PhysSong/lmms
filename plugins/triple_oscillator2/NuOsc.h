@@ -56,9 +56,9 @@ public:
 
 	NuOsc(const IntModel * waveShapeModel,
 				const IntModel * modAlgoModel,
-				const float & freq,
-				const float & detuning,
-				const float & offset,
+				const double & freq,
+				const double & detuning,
+				const double & offset,
 				const float & volume,
 				const int nvoice,
 				const float fspread,
@@ -78,27 +78,27 @@ public:
 		m_userWave = wave;
 		for (int i = 0; i < m_nvoice; ++i) m_pOsc[i]->setUserWave(m_userWave);
 	}
-	void update(sampleFrame * _ab, const fpp_t _frames,
-				const ch_cnt_t _chnl);
+	void update(sampleFrame * buf, const fpp_t frames,
+				const ch_cnt_t channel);
 protected:
 	void recalcFreq();
 private:
 	const IntModel * m_waveShapeModel;
 	const IntModel * m_modulationAlgoModel;
-	const float & m_freq;
-	const float & m_detuning;
-	float m_offset;
-	float m_phase;
-	const float & m_ext_phase;
+	const double & m_freq;
+	const double & m_detuning;
+	double m_offset;
+	double m_phase;
+	const double & m_ext_phase;
 	const float & m_volume;
 	int m_nvoice;
 	const SampleBuffer * m_userWave;
 	NuOsc * m_sub;
 	float m_weight[MAX_VOICES];
 	float m_mult[MAX_VOICES];
-	float m_ifreq[MAX_VOICES];
-	float m_ifmult[MAX_VOICES];
-	float m_iofs[MAX_VOICES];
+	double m_ifreq[MAX_VOICES];
+	double m_ifmult[MAX_VOICES];
+	double m_iofs[MAX_VOICES];
 	Oscillator *m_pOsc[MAX_VOICES];
 
 };

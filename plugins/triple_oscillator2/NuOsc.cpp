@@ -26,43 +26,45 @@
 
 NuOsc::NuOsc(const IntModel * waveShapeModel,
 				const IntModel * modAlgoModel,
-				const float & _freq,
-				const float & _detuning,
-				const float & _offset,
-				const float & _volume,
-				const int _nvoice,
-				const float _fspread,
-				const float _frand,
-				bool _fsame,
-				const float _prand,
-				bool _psame,
-				NuOsc * _sub):
+				const double & freq,
+				const double & detuning,
+				const double & offset,
+				const float & volume,
+				const int nvoice,
+				const float fspread,
+				const float frand,
+				bool fsame,
+				const float prand,
+				bool psame,
+				NuOsc * sub):
 	m_waveShapeModel(waveShapeModel),
 	m_modulationAlgoModel(modAlgoModel),
-	m_freq(_freq),
-	m_detuning(_detuning),
-	m_offset(_offset),
-	m_phase(_offset),
-	m_ext_phase(_offset),
-	m_volume(_volume),
-	m_nvoice(_nvoice),
+	m_freq(freq),
+	m_detuning(detuning),
+	m_offset(offset),
+	m_phase(offset),
+	m_ext_phase(offset),
+	m_volume(volume),
+	m_nvoice(nvoice),
 	m_userWave(NULL),
-	m_sub(_sub){
+	m_sub(sub)
+	{
 	//TODO: HANDLING WHEN THE NUMBER OF VOICES IS DIFFERENT
 	if (m_nvoice < 1) m_nvoice = 1;
 	if (m_nvoice > MAX_VOICES) m_nvoice = MAX_VOICES;
 	if (m_sub) m_nvoice = m_sub->m_nvoice;
-	float step = _fspread / sqrt((float)m_nvoice);
+	float step = fspread / sqrt((float)m_nvoice);
 	float mul = 1.0f;
 	for (int i = 1; i < m_nvoice - 1; ++i) mul *= static_cast<float>(i) / static_cast<float>(i + m_nvoice - 1);
 	m_mult[0]=sqrt(mul);
 	for (int i = 1; i < m_nvoice; ++i) m_mult[i] = m_mult[i-1] * static_cast<float>(m_nvoice - i) / static_cast<float>(i);
-	for (int i = 0; i < m_nvoice; ++i){
-		m_ifmult[i] = m_sub && _fsame ? m_sub->m_ifmult[i]
-					: pow(2.0f,  step / 1200.0f * (2.0f * i + 1.0f - m_nvoice + _frand * 0.01f - rand() * 0.02f * _frand / RAND_MAX));
+	for (int i = 0; i < m_nvoice; ++i)
+	{
+		m_ifmult[i] = m_sub && fsame ? m_sub->m_ifmult[i]
+					: pow(2.0f,  step / 1200.0f * (2.0f * i + 1.0f - m_nvoice + frand * 0.01f - rand() * 0.02f * frand / RAND_MAX));
 		m_ifreq[i] = m_freq * m_ifmult[i];
-		m_iofs[i] = m_sub&&_psame ? m_offset-m_sub->m_offset+m_sub->m_iofs[i]
-					: m_offset +  rand() * 0.01f / RAND_MAX * _prand;
+		m_iofs[i] = m_sub && psame ? m_offset - m_sub->m_offset + m_sub->m_iofs[i]
+					: m_offset + rand() * 0.01f / RAND_MAX * prand - 0.005f * prand;
 		m_pOsc[i] = new Oscillator(
 					m_waveShapeModel,
 					m_modulationAlgoModel,
@@ -80,18 +82,18 @@ void NuOsc::recalcFreq()
 	if (m_sub) m_sub->recalcFreq();
 }
 
-void NuOsc::update(sampleFrame * _ab, const fpp_t _frames,
-					const ch_cnt_t _chnl)
+void NuOsc::update(sampleFrame * buf, const fpp_t frames,
+					const ch_cnt_t channel)
 {
 	recalcFreq();
-	sampleFrame * tf = new sampleFrame[_frames];
-	m_pOsc[0]->update(_ab, _frames, _chnl);
+	sampleFrame * tf = new sampleFrame[frames];
+	m_pOsc[0]->update(buf, frames, channel);
 	for (int i = 1; i < m_nvoice; ++i)
 	{
-		m_pOsc[i]->update(tf, _frames, _chnl);
-		for (fpp_t frame = 0; frame < _frames; ++frame)
+		m_pOsc[i]->update(tf, frames, channel);
+		for (fpp_t frame = 0; frame < frames; ++frame)
 		{
-			_ab[frame][_chnl] += m_mult[i] * tf[frame][_chnl];
+			buf[frame][channel] += m_mult[i] * tf[frame][channel];
 		}
 	}
 	delete tf;

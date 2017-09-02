@@ -247,7 +247,7 @@ public:
 	void processMidiTime( const MidiTime& time );
 
 	/*! Updates total length (m_frames) depending on a new tempo */
-	void resize( const bpm_t newTempo );
+	void resize(const bpm_t newTempo);
 
 	/*! Set song-global offset (relative to containing pattern) in order to properly perform the note detuning */
 	void setSongGlobalParentOffset( const MidiTime& offset )
@@ -315,6 +315,7 @@ private:
 
 	// tempo reaction
 	bpm_t m_origTempo;						// original tempo
+	bpm_t m_curTempo;
 	f_cnt_t m_origFrames;					// original m_frames
 
 	int m_origBaseNote;

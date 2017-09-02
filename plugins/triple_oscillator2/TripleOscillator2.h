@@ -66,11 +66,11 @@ private:
 	float m_volumeRight;
 
 	// normalized detuning -> x/sampleRate
-	float m_detuningLeft;
-	float m_detuningRight;
+	double m_detuningLeft;
+	double m_detuningRight;
 	// normalized offset -> x/360
-	float m_phaseOffsetLeft;
-	float m_phaseOffsetRight;
+	double m_phaseOffsetLeft;
+	double m_phaseOffsetRight;
 
 	friend class TripleOscillator2;
 	friend class TripleOscillator2View;
