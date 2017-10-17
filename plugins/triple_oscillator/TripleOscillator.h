@@ -69,8 +69,8 @@ private:
 	float m_detuningLeft;
 	float m_detuningRight;
 	// normalized offset -> x/360
-	float m_phaseOffsetLeft;
-	float m_phaseOffsetRight;
+	double m_phaseOffsetLeft;
+	double m_phaseOffsetRight;
 
 	friend class TripleOscillator;
 	friend class TripleOscillatorView;
