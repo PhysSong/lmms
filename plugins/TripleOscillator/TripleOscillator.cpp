@@ -193,7 +193,7 @@ void OscillatorObject::updateDetuningRight()
 void OscillatorObject::updatePhaseOffsetLeft()
 {
 	m_phaseOffsetLeft = ( m_phaseOffsetModel.value() +
-				m_stereoPhaseDetuningModel.value() ) / 360.0f;
+				m_stereoPhaseDetuningModel.value() ) / 360.0;
 }
 
 
@@ -201,7 +201,7 @@ void OscillatorObject::updatePhaseOffsetLeft()
 
 void OscillatorObject::updatePhaseOffsetRight()
 {
-	m_phaseOffsetRight = m_phaseOffsetModel.value() / 360.0f;
+	m_phaseOffsetRight = m_phaseOffsetModel.value() / 360.0;
 }
 
 void OscillatorObject::updateUseWaveTable()

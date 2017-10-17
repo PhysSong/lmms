@@ -56,7 +56,7 @@ Oscillator::Oscillator(const IntModel *wave_shape_model,
 			const IntModel *mod_algo_model,
 			const float &freq,
 			const float &detuning_div_samplerate,
-			const float &phase_offset,
+			const double &phase_offset,
 			const float &volume,
 			Oscillator *sub_osc) :
 	m_waveShapeModel(wave_shape_model),
@@ -555,10 +555,10 @@ inline void Oscillator::recalcPhase()
 
 inline bool Oscillator::syncOk( float _osc_coeff )
 {
-	const float v1 = m_phase;
+	const double v1 = m_phase;
 	m_phase += _osc_coeff;
 	// check whether m_phase is in next period
-	return( floorf( m_phase ) > floorf( v1 ) );
+	return( floor( m_phase ) > floor( v1 ) );
 }
 
 
