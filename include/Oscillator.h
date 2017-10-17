@@ -82,7 +82,7 @@ public:
 			const IntModel *mod_algo_model,
 			const float &freq,
 			const float &detuning_div_samplerate,
-			const float &phase_offset,
+			const double &phase_offset,
 			const float &volume,
 			Oscillator *m_subOsc = nullptr);
 	virtual ~Oscillator()
@@ -258,10 +258,10 @@ private:
 	const float & m_freq;
 	const float & m_detuning_div_samplerate;
 	const float & m_volume;
-	const float & m_ext_phaseOffset;
+	const double & m_ext_phaseOffset;
 	Oscillator * m_subOsc;
-	float m_phaseOffset;
-	float m_phase;
+	double m_phaseOffset;
+	double m_phase;
 	std::shared_ptr<const SampleBuffer> m_userWave = SampleBuffer::emptyBuffer();
 	std::shared_ptr<const OscillatorConstants::waveform_t> m_userAntiAliasWaveTable;
 	bool m_useWaveTable;

@@ -160,8 +160,8 @@ private:
 	{
 		Oscillator * oscLeft;
 		Oscillator * oscRight;
-		float phaseOffsetLeft[NUM_OSCILLATORS];
-		float phaseOffsetRight[NUM_OSCILLATORS];		
+		double phaseOffsetLeft[NUM_OSCILLATORS];
+		double phaseOffsetRight[NUM_OSCILLATORS];
 	} ;
 
 	const IntModel m_modulationAlgo;
