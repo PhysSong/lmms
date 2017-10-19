@@ -50,6 +50,7 @@ SET(LMMS_PLUGIN_LIST
 	MultitapEcho
 	Monstro
 	Nes
+	Noyzr
 	OpulenZ
 	Organic
 	FreeBoy
