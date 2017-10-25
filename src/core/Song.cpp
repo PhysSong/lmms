@@ -48,6 +48,7 @@
 #include "ExportFilter.h"
 #include "Pattern.h"
 #include "PianoRoll.h"
+#include "PresetPreviewPlayHandle.h"
 #include "ProjectJournal.h"
 #include "ProjectNotes.h"
 #include "SongEditor.h"
@@ -1370,7 +1371,10 @@ void Song::updateFramesPerTick()
 
 void Song::setModified()
 {
-	setModified(true);
+	if (!PresetPreviewPlayHandle::isPreviewing())
+	{
+		setModified(true);
+	}
 }
 
 void Song::setProjectFileName(QString const & projectFileName)
