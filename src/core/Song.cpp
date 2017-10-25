@@ -50,6 +50,7 @@
 #include "PatternStore.h"
 #include "PatternTrack.h"
 #include "PianoRoll.h"
+#include "PresetPreviewPlayHandle.h"
 #include "ProjectJournal.h"
 #include "ProjectNotes.h"
 #include "Scale.h"
@@ -1409,7 +1410,10 @@ void Song::updateFramesPerTick()
 
 void Song::setModified()
 {
-	setModified(true);
+	if (!PresetPreviewPlayHandle::isPreviewing())
+	{
+		setModified(true);
+	}
 }
 
 void Song::setProjectFileName(QString const & projectFileName)
