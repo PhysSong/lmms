@@ -39,6 +39,8 @@
 #include <QtCore/QList>
 #include <QtCore/QMap>
 
+#include <memory>
+
 #include "AudioDevice.h"
 #include "AudioDeviceSetupWidget.h"
 
@@ -112,7 +114,10 @@ private:
 
 	std::atomic<MidiJack *> m_midiClient;
 	QVector<jack_port_t *> m_outputPorts;
+	QVector<jack_port_t *> m_inputPorts;
 	jack_default_audio_sample_t * * m_tempOutBufs;
+	jack_default_audio_sample_t * * m_tempInBufs;
+	std::unique_ptr<sampleFrame[]> m_inBuffer;
 	surroundSampleFrame * m_outBuf;
 
 	f_cnt_t m_framesDoneInCurBuf;
