@@ -291,7 +291,7 @@ public:
 		return m_fifoWriter != NULL;
 	}
 
-	void pushInputFrames( sampleFrame * _ab, const f_cnt_t _frames );
+	void pushInputFrames(const sampleFrame * ab, const f_cnt_t frames);
 
 	inline const sampleFrame * inputBuffer()
 	{
