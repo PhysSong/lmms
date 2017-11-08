@@ -866,7 +866,10 @@ void TrackContentObjectView::mouseMoveEvent( QMouseEvent * me )
 				{
 					m_tco->movePosition( t );
 					m_tco->changeLength( m_tco->length() + ( oldPos - t ) );
-					sTco->setStartTimeOffset( sTco->startTimeOffset() + ( oldPos - t ) );
+					if (!sTco->isEmpty())
+					{
+						sTco->setStartTimeOffset(sTco->startTimeOffset() + (oldPos - t));
+					}
 				}
 			}
 		}
