@@ -156,6 +156,7 @@ void SampleTCO::setSampleBuffer( SampleBuffer* sb )
 {
 	Engine::mixer()->requestChangeInModel();
 	sharedObject::unref( m_sampleBuffer );
+	setStartTimeOffset( 0 );
 	Engine::mixer()->doneChangeInModel();
 	m_sampleBuffer = sb;
 	updateLength();
