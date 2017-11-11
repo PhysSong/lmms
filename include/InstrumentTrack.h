@@ -334,6 +334,8 @@ public:
 	QMenu * createFxMenu( QString title, QString newFxLabel ) override;
 
 
+	void updateTrackOperationsWidgetMenu (TrackOperationsWidget *trackOperations) override;
+
 protected:
 	void dragEnterEvent( QDragEnterEvent * _dee ) override;
 	void dropEvent( QDropEvent * _de ) override;

@@ -101,6 +101,8 @@ public:
 	// Currently instrument track and sample track supports it
 	virtual QMenu * createFxMenu(QString title, QString newFxLabel);
 
+	virtual void updateTrackOperationsWidgetMenu (TrackOperationsWidget *trackOperations);
+
 
 public slots:
 	virtual bool close();

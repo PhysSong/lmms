@@ -1347,6 +1347,14 @@ QMenu * InstrumentTrackView::createFxMenu(QString title, QString newFxLabel)
 	return fxMenu;
 }
 
+void InstrumentTrackView::updateTrackOperationsWidgetMenu(TrackOperationsWidget *trackOperations)
+{
+	auto toMenu = trackOperations->trackOps()->menu();
+
+	toMenu->addSeparator();
+	toMenu->addMenu( midiMenu() );
+}
+
 
 
 

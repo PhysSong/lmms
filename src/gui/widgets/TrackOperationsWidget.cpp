@@ -225,6 +225,11 @@ void TrackOperationsWidget::clearTrack()
 	t->unlock();
 }
 
+QPushButton *TrackOperationsWidget::trackOps() const
+{
+	return m_trackOps;
+}
+
 
 
 /*! \brief Remove this track from the track list
@@ -300,16 +305,7 @@ void TrackOperationsWidget::updateMenu()
 		toMenu->addMenu(fxMenu);
 	}
 
-	if (InstrumentTrackView * trackView = dynamic_cast<InstrumentTrackView *>(m_trackView))
-	{
-		toMenu->addSeparator();
-		toMenu->addMenu(trackView->midiMenu());
-	}
-	if( dynamic_cast<AutomationTrackView *>( m_trackView ) )
-	{
-		toMenu->addAction( tr( "Turn all recording on" ), this, SLOT( recordingOn() ) );
-		toMenu->addAction( tr( "Turn all recording off" ), this, SLOT( recordingOff() ) );
-	}
+	m_trackView->updateTrackOperationsWidgetMenu(this);
 
 	toMenu->addSeparator();
 	toMenu->addAction( embed::getIconPixmap( "colorize" ),
@@ -322,32 +318,3 @@ void TrackOperationsWidget::updateMenu()
 	toMenu->addAction( embed::getIconPixmap( "colorize" ),
 						tr( "Clear clip colors" ), this, SLOT( useTrackColor() ) );
 }
-
-
-void TrackOperationsWidget::toggleRecording( bool on )
-{
-	AutomationTrackView * atv = dynamic_cast<AutomationTrackView *>( m_trackView );
-	if( atv )
-	{
-		for( TrackContentObject * tco : atv->getTrack()->getTCOs() )
-		{
-			AutomationPattern * ap = dynamic_cast<AutomationPattern *>( tco );
-			if( ap ) { ap->setRecording( on ); }
-		}
-		atv->update();
-	}
-}
-
-
-
-void TrackOperationsWidget::recordingOn()
-{
-	toggleRecording( true );
-}
-
-
-void TrackOperationsWidget::recordingOff()
-{
-	toggleRecording( false );
-}
-

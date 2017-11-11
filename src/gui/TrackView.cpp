@@ -168,6 +168,10 @@ void TrackView::update()
 	QWidget::update();
 }
 
+void TrackView::updateTrackOperationsWidgetMenu(TrackOperationsWidget *trackOperations)
+{
+}
+
 
 
 

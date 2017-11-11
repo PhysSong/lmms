@@ -39,6 +39,7 @@ public:
 	TrackOperationsWidget( TrackView * parent );
 	~TrackOperationsWidget();
 
+	QPushButton *trackOps() const;
 
 protected:
 	void mousePressEvent( QMouseEvent * me ) override;
@@ -53,9 +54,6 @@ private slots:
 	void randomTrackColor();
 	void resetTrackColor();
 	void useTrackColor();
-	void toggleRecording(bool on);
-	void recordingOn();
-	void recordingOff();
 	void clearTrack();
 
 private:
