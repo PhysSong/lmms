@@ -51,7 +51,7 @@ Keymap::Keymap(
 	int newLast,
 	int newMiddle,
 	int newBaseKey,
-	float newBaseFreq
+	double newBaseFreq
 ) :
 	m_description(description),
 	m_map(std::move(newMap)),

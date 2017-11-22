@@ -62,7 +62,7 @@ Microtuner::Microtuner() :
  *  \param key A MIDI key number ranging from 0 to 127.
  *  \return Frequency in Hz; 0 if key is out of range or not mapped.
  */
-float Microtuner::keyToFreq(int key, int userBaseNote) const
+double Microtuner::keyToFreq(int key, int userBaseNote) const
 {
 	if (key < 0 || key >= NumKeys) {return 0;}
 	Song *song = Engine::getSong();
@@ -102,7 +102,7 @@ float Microtuner::keyToFreq(int key, int userBaseNote) const
 
 	// Compute frequency of the middle note and return the final frequency
 	const double octaveRatio = intervals[octaveDegree].getRatio();
-	const float middleFreq = (keymap->getBaseFreq() / pow(octaveRatio, (baseScaleOctave + baseKeymapOctave)))
+	const double middleFreq = (keymap->getBaseFreq() / pow(octaveRatio, (baseScaleOctave + baseKeymapOctave)))
 								/ intervals[baseScaleDegree].getRatio();
 
 	return middleFreq * intervals[scaleDegree].getRatio() * pow(octaveRatio, keymapOctave + scaleOctave);

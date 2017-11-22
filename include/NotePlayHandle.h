@@ -95,13 +95,13 @@ public:
 			: 0;
 	}
 
-	const float& frequency() const
+	const double& frequency() const
 	{
 		return m_frequency;
 	}
 
 	/*! Returns frequency without pitch wheel influence */
-	float unpitchedFrequency() const
+	double unpitchedFrequency() const
 	{
 		return m_unpitchedFrequency;
 	}
@@ -274,19 +274,19 @@ private:
 	public:
 		BaseDetuning( DetuningHelper* detuning );
 
-		void setValue( float val )
+		void setValue( double val )
 		{
 			m_value = val;
 		}
 
-		float value() const
+		double value() const
 		{
 			return m_value;
 		}
 
 
 	private:
-		float m_value;
+		double m_value;
 
 	} ;
 
@@ -321,8 +321,8 @@ private:
 
 	int m_origBaseNote;
 
-	float m_frequency;
-	float m_unpitchedFrequency;
+	double m_frequency;
+	double m_unpitchedFrequency;
 
 	BaseDetuning* m_baseDetuning;
 	TimePos m_songGlobalParentOffset;

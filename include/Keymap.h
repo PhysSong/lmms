@@ -46,7 +46,7 @@ public:
 		int newLast,
 		int newMiddle,
 		int newBaseKey,
-		float newBaseFreq
+		double newBaseFreq
 	);
 
 	QString getDescription() const;
@@ -56,7 +56,7 @@ public:
 	int getFirstKey() const {return m_firstKey;}
 	int getLastKey() const {return m_lastKey;}
 	int getBaseKey() const {return m_baseKey;}
-	float getBaseFreq() const {return m_baseFreq;}
+	double getBaseFreq() const {return m_baseFreq;}
 
 	std::size_t getSize() const {return m_map.size();}
 	int getDegree(int key) const;
@@ -75,7 +75,7 @@ private:
 	int m_lastKey;                  //!< last key that will be mapped
 	int m_middleKey;                //!< first line of the map refers to this key
 	int m_baseKey;                  //!< key which is assigned the reference "base note"
-	float m_baseFreq;               //!< frequency of the base note (usually A4 @440 Hz)
+	double m_baseFreq;              //!< frequency of the base note (usually A4 @440 Hz)
 };
 
 } // namespace lmms

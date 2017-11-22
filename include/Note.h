@@ -89,7 +89,7 @@ const int NumKeys = 128;
 
 const int DefaultMiddleKey = Octave::Octave_4 + Key::C;
 const int DefaultBaseKey = Octave::Octave_4 + Key::A;
-const float DefaultBaseFreq = 440.f;
+const double DefaultBaseFreq = 440.0;
 
 const float MaxDetuning = 5 * 12.0f;
 

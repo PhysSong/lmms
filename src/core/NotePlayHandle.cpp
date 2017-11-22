@@ -522,8 +522,8 @@ void NotePlayHandle::updateFrequency()
 {
 	int masterPitch = m_instrumentTrack->m_useMasterPitchModel.value() ? Engine::getSong()->masterPitch() : 0;
 	int baseNote = m_instrumentTrack->baseNoteModel()->value();
-	float detune = m_baseDetuning->value();
-	float instrumentPitch = m_instrumentTrack->pitchModel()->value();
+	double detune = m_baseDetuning->value();
+	double instrumentPitch = m_instrumentTrack->pitchModel()->value();
 
 	if (m_instrumentTrack->m_microtuner.enabled())
 	{
@@ -533,8 +533,8 @@ void NotePlayHandle::updateFrequency()
 		if (m_instrumentTrack->isKeyMapped(transposedKey))
 		{
 			const auto frequency = m_instrumentTrack->m_microtuner.keyToFreq(transposedKey, baseNote);
-			m_frequency = frequency * powf(2.f, (detune + instrumentPitch / 100) / 12.f);
-			m_unpitchedFrequency = frequency * powf(2.f, detune / 12.f);
+			m_frequency = frequency * pow(2.0, (detune + instrumentPitch / 100) / 12.0);
+			m_unpitchedFrequency = frequency * pow(2.0, detune / 12.0);
 		}
 		else
 		{
@@ -544,9 +544,9 @@ void NotePlayHandle::updateFrequency()
 	else
 	{
 		// default key mapping and 12-TET frequency computation with default 440 Hz base note frequency
-		const float pitch = (key() - baseNote + masterPitch + detune) / 12.0f;
-		m_frequency = DefaultBaseFreq * powf(2.0f, pitch + instrumentPitch / (100 * 12.0f));
-		m_unpitchedFrequency = DefaultBaseFreq * powf(2.0f, pitch);
+		const double pitch = (key() - baseNote + masterPitch + detune) / 12.0;
+		m_frequency = DefaultBaseFreq * pow(2.0, pitch + instrumentPitch / (100 * 12.0));
+		m_unpitchedFrequency = DefaultBaseFreq * pow(2.0, pitch);
 	}
 
 	for (auto it : m_subNotes)

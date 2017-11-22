@@ -79,7 +79,7 @@ const QString WAVEFORM_NAMES[6] = {
 	"Exponential wave"
 	};
 	
-const float CENT = 1.0f / 1200.0f;
+const double CENT = 1.0 / 1200.0;
 
 class OscillatorObject : public Model
 {
@@ -96,11 +96,11 @@ private:
 	float m_volumeLeft;
 	float m_volumeRight;
 	// normalized detuning -> x/sampleRate
-	float m_detuningLeft;
-	float m_detuningRight;
+	double m_detuningLeft;
+	double m_detuningRight;
 	// normalized offset -> x/360
-	float m_phaseOffsetLeft;
-	float m_phaseOffsetRight;
+	double m_phaseOffsetLeft;
+	double m_phaseOffsetRight;
 
 	OscillatorObject( Model * _parent, int _index );
 	~OscillatorObject() override = default;
@@ -136,7 +136,7 @@ public:
 
 	int intRand( int min, int max );
 
-	static float * s_harmonics;
+	static double * s_harmonics;
 
 public slots:
 	void randomiseSettings();

@@ -51,9 +51,9 @@ public:
 	int firstKey() const;
 	int lastKey() const;
 	int baseKey() const;
-	float baseFreq() const;
+	double baseFreq() const;
 
-	float keyToFreq(int key, int userBaseNote) const;
+	double keyToFreq(int key, int userBaseNote) const;
 	int octaveSize() const;
 
 	QString nodeName() const override {return "microtuner";}

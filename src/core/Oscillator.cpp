@@ -54,8 +54,8 @@ void Oscillator::waveTableInit()
 
 Oscillator::Oscillator(const IntModel *wave_shape_model,
 			const IntModel *mod_algo_model,
-			const float &freq,
-			const float &detuning_div_samplerate,
+			const double &freq,
+			const double &detuning_div_samplerate,
 			const double &phase_offset,
 			const float &volume,
 			Oscillator *sub_osc) :
@@ -530,7 +530,11 @@ void Oscillator::updateFM( sampleFrame * _ab, const fpp_t _frames,
 }
 
 
-
+inline double absFraction( const double _x )
+{
+	return( _x - ( _x >= 0.0f ? static_cast<int>( _x ) :
+						static_cast<int>( _x ) - 1 ) );
+}
 
 // should be called every time phase-offset is changed...
 inline void Oscillator::recalcPhase()
@@ -578,7 +582,7 @@ void Oscillator::updateNoSub( sampleFrame * _ab, const fpp_t _frames,
 							const ch_cnt_t _chnl )
 {
 	recalcPhase();
-	const float osc_coeff = m_freq * m_detuning_div_samplerate;
+	const double osc_coeff = m_freq * m_detuning_div_samplerate;
 
 	for( fpp_t frame = 0; frame < _frames; ++frame )
 	{
@@ -597,7 +601,7 @@ void Oscillator::updatePM( sampleFrame * _ab, const fpp_t _frames,
 {
 	m_subOsc->update( _ab, _frames, _chnl, true );
 	recalcPhase();
-	const float osc_coeff = m_freq * m_detuning_div_samplerate;
+	const double osc_coeff = m_freq * m_detuning_div_samplerate;
 
 	for( fpp_t frame = 0; frame < _frames; ++frame )
 	{
@@ -618,7 +622,7 @@ void Oscillator::updateAM( sampleFrame * _ab, const fpp_t _frames,
 {
 	m_subOsc->update( _ab, _frames, _chnl, false );
 	recalcPhase();
-	const float osc_coeff = m_freq * m_detuning_div_samplerate;
+	const double osc_coeff = m_freq * m_detuning_div_samplerate;
 
 	for( fpp_t frame = 0; frame < _frames; ++frame )
 	{
@@ -637,7 +641,7 @@ void Oscillator::updateMix( sampleFrame * _ab, const fpp_t _frames,
 {
 	m_subOsc->update( _ab, _frames, _chnl, false );
 	recalcPhase();
-	const float osc_coeff = m_freq * m_detuning_div_samplerate;
+	const double osc_coeff = m_freq * m_detuning_div_samplerate;
 
 	for( fpp_t frame = 0; frame < _frames; ++frame )
 	{
@@ -657,7 +661,7 @@ void Oscillator::updateSync( sampleFrame * _ab, const fpp_t _frames,
 {
 	const float sub_osc_coeff = m_subOsc->syncInit( _ab, _frames, _chnl );
 	recalcPhase();
-	const float osc_coeff = m_freq * m_detuning_div_samplerate;
+	const double osc_coeff = m_freq * m_detuning_div_samplerate;
 
 	for( fpp_t frame = 0; frame < _frames ; ++frame )
 	{
@@ -680,7 +684,7 @@ void Oscillator::updateFM( sampleFrame * _ab, const fpp_t _frames,
 {
 	m_subOsc->update( _ab, _frames, _chnl, true );
 	recalcPhase();
-	const float osc_coeff = m_freq * m_detuning_div_samplerate;
+	const double osc_coeff = m_freq * m_detuning_div_samplerate;
 	const float sampleRateCorrection = 44100.0f / Engine::audioEngine()->processingSampleRate();
 
 	for( fpp_t frame = 0; frame < _frames; ++frame )
