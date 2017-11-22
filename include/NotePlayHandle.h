@@ -96,13 +96,13 @@ public:
 			: 0;
 	}
 
-	const float& frequency() const
+	const double& frequency() const
 	{
 		return m_frequency;
 	}
 
 	/*! Returns frequency without pitch wheel influence */
-	float unpitchedFrequency() const
+	double unpitchedFrequency() const
 	{
 		return m_unpitchedFrequency;
 	}
@@ -320,8 +320,8 @@ private:
 
 	int m_origBaseNote;
 
-	float m_frequency;
-	float m_unpitchedFrequency;
+	double m_frequency;
+	double m_unpitchedFrequency;
 
 	BaseDetuning* m_baseDetuning;
 	MidiTime m_songGlobalParentOffset;

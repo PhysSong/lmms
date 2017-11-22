@@ -502,14 +502,14 @@ bool NotePlayHandle::operator==( const NotePlayHandle & _nph ) const
 void NotePlayHandle::updateFrequency()
 {
 	int mp = m_instrumentTrack->m_useMasterPitchModel.value() ? Engine::getSong()->masterPitch() : 0;
-	const float pitch =
+	const double pitch =
 		( key() -
 				m_instrumentTrack->baseNoteModel()->value() +
 				mp +
 				m_baseDetuning->value() )
-												 / 12.0f;
-	m_frequency = BaseFreq * powf( 2.0f, pitch + m_instrumentTrack->pitchModel()->value() / ( 100 * 12.0f ) );
-	m_unpitchedFrequency = BaseFreq * powf( 2.0f, pitch );
+												 / 12.0;
+	m_frequency = BaseFreq * pow( 2.0, pitch + m_instrumentTrack->pitchModel()->value() / ( 100 * 12.0 ) );
+	m_unpitchedFrequency = BaseFreq * pow( 2.0f, pitch );
 
 	for( NotePlayHandleList::Iterator it = m_subNotes.begin(); it != m_subNotes.end(); ++it )
 	{

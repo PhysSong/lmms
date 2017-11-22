@@ -69,8 +69,8 @@ public:
 
 	Oscillator( const IntModel * _wave_shape_model,
 			const IntModel * _mod_algo_model,
-			const float & _freq,
-			const float & _detuning,
+			const double & _freq,
+			const double & _detuning,
 			const double & _phase_offset,
 			const float & _volume,
 			Oscillator * _m_subOsc = NULL );
@@ -157,8 +157,8 @@ public:
 private:
 	const IntModel * m_waveShapeModel;
 	const IntModel * m_modulationAlgoModel;
-	const float & m_freq;
-	const float & m_detuning;
+	const double & m_freq;
+	const double & m_detuning;
 	const float & m_volume;
 	const double & m_ext_phaseOffset;
 	Oscillator * m_subOsc;
