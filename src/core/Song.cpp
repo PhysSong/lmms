@@ -611,6 +611,7 @@ void Song::playPattern( const Pattern* patternToPlay, bool loop )
 
 void Song::updateLength()
 {
+	if( isLoadingProject() ) { return; }
 	m_length = 0;
 	m_tracksMutex.lockForRead();
 	for (auto track : tracks())
@@ -1184,16 +1185,22 @@ void Song::loadProject( const QString & fileName )
 
 	ConfigManager::inst()->addRecentlyOpenedProject( fileName );
 
-	Engine::projectJournal()->setJournalling( true );
-
-	emit projectLoaded();
-
 	if( isCancelled() )
 	{
 		m_isCancelled = false;
 		createNewProject();
 		return;
 	}
+
+	m_loadingProject = false;
+	setModified(false);
+	m_loadOnLaunch = false;
+
+	updateLength();
+
+	Engine::projectJournal()->setJournalling( true );
+
+	emit projectLoaded();
 
 	if ( hasErrors())
 	{
@@ -1207,10 +1214,6 @@ void Song::loadProject( const QString & fileName )
 			QTextStream(stderr) << Engine::getSong()->errorSummary() << endl;
 		}
 	}
-
-	m_loadingProject = false;
-	setModified(false);
-	m_loadOnLaunch = false;
 }
 
 
