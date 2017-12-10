@@ -51,6 +51,7 @@
 #include "PresetPreviewPlayHandle.h"
 #include "ProjectJournal.h"
 #include "ProjectNotes.h"
+#include "SamplePlayHandle.h"
 #include "SongEditor.h"
 #include "TimeLineWidget.h"
 #include "PeakController.h"
@@ -86,6 +87,7 @@ Song::Song() :
 	m_isCancelled( false ),
 	m_playMode( Mode_None ),
 	m_length( 0 ),
+	m_metronomeActive(false),
 	m_patternToPlay( NULL ),
 	m_loopPattern( false ),
 	m_elapsedTicks( 0 ),
@@ -169,6 +171,8 @@ void Song::setTimeSignature()
 	emit timeSignatureChanged( m_oldTicksPerBar, ticksPerBar() );
 	emit dataChanged();
 	m_oldTicksPerBar = ticksPerBar();
+
+	Engine::updateFramesPerTick();
 
 	m_vstSyncController.setTimeSignature(
 		getTimeSigModel().getNumerator(), getTimeSigModel().getDenominator() );
@@ -394,6 +398,27 @@ void Song::processNextBuffer()
 
 		if( ( f_cnt_t ) currentFrame == 0 )
 		{
+			// process metronome
+			PlayPos p = m_playPos[m_playMode];
+
+			bool playModeSupportsMetronome = m_playMode == Mode_PlayPattern ||
+							 m_playMode == Mode_PlaySong ||
+							 m_playMode == Mode_PlayBB;
+
+			if( playModeSupportsMetronome && m_metronomeActive && !isExporting() && !isPaused() )
+			{
+				int den = m_timeSigModel.getDenominator();
+				int num = m_timeSigModel.getNumerator();
+				if ( p.getTicks() * den % ( DefaultTicksPerBar * num ) == 0 )
+				{
+					Engine::mixer()->addPlayHandle( new SamplePlayHandle( "misc/metronome02.ogg" ) );
+				}
+				else if ( p.getTicks() * den % DefaultTicksPerBar == 0 )
+				{
+					Engine::mixer()->addPlayHandle( new SamplePlayHandle( "misc/metronome01.ogg" ) );
+				}
+			}
+
 			processAutomations(trackList, m_playPos[m_playMode], framesToPlay);
 
 			// loop through all tracks and play them

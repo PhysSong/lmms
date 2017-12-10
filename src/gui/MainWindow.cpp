@@ -467,7 +467,7 @@ void MainWindow::finalize()
 				this, SLOT( onToggleMetronome() ),
 							m_toolBar );
 	m_metronomeToggle->setCheckable(true);
-	m_metronomeToggle->setChecked(Engine::mixer()->isMetronomeActive());
+	m_metronomeToggle->setChecked(Engine::getSong()->isMetronomeActive());
 
 	m_toolBarLayout->setColumnMinimumWidth( 0, 5 );
 	m_toolBarLayout->addWidget( project_new, 0, 1 );
@@ -1227,9 +1227,7 @@ void MainWindow::updateConfig( QAction * _who )
 
 void MainWindow::onToggleMetronome()
 {
-	Mixer * mixer = Engine::mixer();
-
-	mixer->setMetronomeActive( m_metronomeToggle->isChecked() );
+	Engine::getSong()->setMetronomeActive( m_metronomeToggle->isChecked() );
 }
 
 

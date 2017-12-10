@@ -253,6 +253,9 @@ public:
 		return getPlayPos(m_playMode);
 	}
 
+	inline bool isMetronomeActive() const { return m_metronomeActive; }
+	inline void setMetronomeActive(bool value = true) { m_metronomeActive = value; }
+
 	void updateLength();
 	bar_t length() const
 	{
@@ -446,6 +449,8 @@ private:
 	PlayModes m_playMode;
 	PlayPos m_playPos[Mode_Count];
 	bar_t m_length;
+
+	bool m_metronomeActive;
 
 	const Pattern* m_patternToPlay;
 	bool m_loopPattern;

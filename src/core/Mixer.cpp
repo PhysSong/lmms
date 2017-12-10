@@ -86,7 +86,6 @@ Mixer::Mixer( bool renderOnly ) :
 	m_oldAudioDev( NULL ),
 	m_audioDevStartFailed( false ),
 	m_profiler(),
-	m_metronomeActive(false),
 	m_clearSignal( false ),
 	m_changesSignal( false ),
 	m_changes( 0 ),
@@ -345,6 +344,7 @@ const surroundSampleFrame * Mixer::renderNextBuffer()
 
 	s_renderingThread = true;
 
+<<<<<<< HEAD
 	static Song::PlayPos last_metro_pos = -1;
 
 	Song *song = Engine::getSong();
@@ -374,6 +374,8 @@ const surroundSampleFrame * Mixer::renderNextBuffer()
 		last_metro_pos = p;
 	}
 
+=======
+>>>>>>> 172c976ab... METRONOME
 	// swap buffer
 	m_inputBufferWrite = ( m_inputBufferWrite + 1 ) % 2;
 	m_inputBufferRead =  ( m_inputBufferRead + 1 ) % 2;
@@ -424,7 +426,7 @@ const surroundSampleFrame * Mixer::renderNextBuffer()
 	fxMixer->prepareMasterMix();
 
 	// create play-handles for new notes, samples etc.
-	song->processNextBuffer();
+	Engine::getSong()->processNextBuffer();
 
 	// add all play-handles that have to be added
 	for( LocklessListElement * e = m_newPlayHandles.popList(); e; )
