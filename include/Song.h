@@ -278,6 +278,9 @@ public:
 	auto getTimeline() -> Timeline& { return getTimeline(m_playMode); }
 	auto getTimeline() const -> const Timeline& { return getTimeline(m_playMode); }
 
+	inline bool isMetronomeActive() const { return m_metronomeActive; }
+	inline void setMetronomeActive(bool value = true) { m_metronomeActive = value; }
+
 	void updateLength();
 	bar_t length() const
 	{
@@ -490,6 +493,8 @@ private:
 	PlayMode m_playMode;
 	PlayPos m_playPos[PlayModeCount];
 	bar_t m_length;
+
+	bool m_metronomeActive;
 
 	const MidiClip* m_midiClipToPlay;
 	bool m_loopMidiClip;
