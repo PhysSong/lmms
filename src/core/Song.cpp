@@ -533,6 +533,8 @@ void Song::record()
 
 void Song::playAndRecord()
 {
+	emit beforeRecord ();
+
 	playSong();
 	m_recording = true;
 }
