@@ -32,6 +32,7 @@ SET(LMMS_PLUGIN_LIST
 	carlarack
 	CrossoverEQ
 	Delay
+	DistEnv
 	DualFilter
 	dynamics_processor
 	Eq
