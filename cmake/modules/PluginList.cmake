@@ -34,6 +34,7 @@ SET(LMMS_PLUGIN_LIST
 	CrossoverEQ
 	Delay
 	Dispersion
+	DistEnv
 	DualFilter
 	DynamicsProcessor
 	Eq
