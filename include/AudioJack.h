@@ -106,6 +106,9 @@ private:
 							void * _udata );
 	static void shutdownCallback( void * _udata );
 
+	void connectJackPort	(const char *outputPort,
+							 const char *inputPort,
+							 const char *portName);
 
 	jack_client_t * m_client;
 
