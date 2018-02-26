@@ -440,9 +440,10 @@ void MidiClipView::paintEvent( QPaintEvent * )
 	}
 
 	// Compute pixels per bar
-	const int baseWidth = fixedClips() ? parentWidget()->width() - 2 * BORDER_WIDTH
-						: width() - BORDER_WIDTH;
-	const float pixelsPerBar = baseWidth / (float) m_clip->length().getBar();
+	const float pixelsPerBar = fixedClips() ?
+				(parentWidget()->width() - 2 * BORDER_WIDTH)
+					/ (float) m_clip->length().getBar() :
+				ClipView::pixelsPerBar();
 
 	// Length of one bar/beat in the [0,1] x [0,1] coordinate system
 	const float barLength = 1. / m_clip->length().getBar();
@@ -635,12 +636,12 @@ void MidiClipView::paintEvent( QPaintEvent * )
 
 	for( bar_t t = 1; t < m_clip->length().getBar(); ++t )
 	{
-		p.drawLine( x_base + static_cast<int>( pixelsPerBar * t ) - 1,
+		p.drawLine( x_base + static_cast<int>( pixelsPerBar * t ) - 2,
 				BORDER_WIDTH, x_base + static_cast<int>(
-						pixelsPerBar * t ) - 1, BORDER_WIDTH + lineSize );
-		p.drawLine( x_base + static_cast<int>( pixelsPerBar * t ) - 1,
+						pixelsPerBar * t ) - 2, BORDER_WIDTH + lineSize );
+		p.drawLine( x_base + static_cast<int>( pixelsPerBar * t ) - 2,
 				rect().bottom() - ( lineSize + BORDER_WIDTH ),
-				x_base + static_cast<int>( pixelsPerBar * t ) - 1,
+				x_base + static_cast<int>( pixelsPerBar * t ) - 2,
 				rect().bottom() - BORDER_WIDTH );
 	}
 
