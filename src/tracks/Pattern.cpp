@@ -903,9 +903,10 @@ void PatternView::paintEvent( QPaintEvent * )
 	}
 
 	// Compute pixels per bar
-	const int baseWidth = fixedTCOs() ? parentWidget()->width() - 2 * TCO_BORDER_WIDTH
-						: width() - TCO_BORDER_WIDTH;
-	const float pixelsPerBar = baseWidth / (float) m_pat->length().getBar();
+	const float pixelsPerBar = fixedTCOs() ?
+				(parentWidget()->width() - 2 * TCO_BORDER_WIDTH)
+					/ (float) m_pat->length().getBar() :
+				TrackContentObjectView::pixelsPerBar();
 
 	// Length of one bar/beat in the [0,1] x [0,1] coordinate system
 	const float barLength = 1. / m_pat->length().getBar();
@@ -1099,12 +1100,12 @@ void PatternView::paintEvent( QPaintEvent * )
 
 	for( bar_t t = 1; t < m_pat->length().getBar(); ++t )
 	{
-		p.drawLine( x_base + static_cast<int>( pixelsPerBar * t ) - 1,
+		p.drawLine( x_base + static_cast<int>( pixelsPerBar * t ) - 2,
 				TCO_BORDER_WIDTH, x_base + static_cast<int>(
-						pixelsPerBar * t ) - 1, TCO_BORDER_WIDTH + lineSize );
-		p.drawLine( x_base + static_cast<int>( pixelsPerBar * t ) - 1,
+						pixelsPerBar * t ) - 2, TCO_BORDER_WIDTH + lineSize );
+		p.drawLine( x_base + static_cast<int>( pixelsPerBar * t ) - 2,
 				rect().bottom() - ( lineSize + TCO_BORDER_WIDTH ),
-				x_base + static_cast<int>( pixelsPerBar * t ) - 1,
+				x_base + static_cast<int>( pixelsPerBar * t ) - 2,
 				rect().bottom() - TCO_BORDER_WIDTH );
 	}
 
