@@ -581,7 +581,7 @@ void SampleTCOView::paintEvent( QPaintEvent * pe )
 	QPainter p( &m_paintPixmap );
 
 	QLinearGradient lingrad( 0, 0, 0, height() );
-	QColor c = getColorForDisplay( painter.background().color() );
+	QColor c = getColorForDisplay(m_tco->isRecord() ? recordingBackgroundColor() : painter.background().color());
 	bool muted = m_tco->getTrack()->isMuted() || m_tco->isMuted();
 
 	lingrad.setColorAt( 1, c.darker( 300 ) );
@@ -638,21 +638,6 @@ void SampleTCOView::paintEvent( QPaintEvent * pe )
 		const int size = 14;
 		p.drawPixmap( spacing, height() - ( size + spacing ),
 			embed::getIconPixmap( "muted", size, size ) );
-	}
-
-	// recording sample tracks is not possible at the moment
-
-	if( m_tco->isRecord() )
-	{
-		p.setFont( pointSize<7>( p.font() ) );
-
-		p.setPen( textShadowColor() );
-		p.drawText( 10, p.fontMetrics().height()+1, "Rec" );
-		p.setPen( textColor() );
-		p.drawText( 9, p.fontMetrics().height(), "Rec" );
-
-		p.setBrush( QBrush( textColor() ) );
-		p.drawEllipse( 4, 5, 4, 4 );
 	}
 
 	p.end();

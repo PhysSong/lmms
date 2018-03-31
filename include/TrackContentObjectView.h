@@ -54,6 +54,7 @@ class TrackContentObjectView : public selectableObject, public ModelView
 	Q_PROPERTY( QColor textBackgroundColor READ textBackgroundColor WRITE setTextBackgroundColor )
 	Q_PROPERTY( QColor textShadowColor READ textShadowColor WRITE setTextShadowColor )
 	Q_PROPERTY( QColor BBPatternBackground READ BBPatternBackground WRITE setBBPatternBackground )
+	Q_PROPERTY( QColor recordingBackgroundColor READ recordingBackgroundColor WRITE setRecordingBackgroundColor )
 	Q_PROPERTY( bool gradient READ gradient WRITE setGradient )
 	// We have to use a QSize here because using QPoint isn't supported.
 	// width -> x, height -> y
@@ -83,6 +84,7 @@ public:
 	QColor textBackgroundColor() const;
 	QColor textShadowColor() const;
 	QColor BBPatternBackground() const;
+	QColor recordingBackgroundColor() const;
 	bool gradient() const;
 	void setMutedColor( const QColor & c );
 	void setMutedBackgroundColor( const QColor & c );
@@ -93,6 +95,7 @@ public:
 	void setBBPatternBackground( const QColor & c );
 	void setGradient( const bool & b );
 	void setMouseHotspotHand(const QSize & s);
+	void setRecordingBackgroundColor (const QColor & c );
 
 	// access needsUpdate member variable
 	bool needsUpdate();
@@ -201,6 +204,7 @@ private:
 	QColor m_textBackgroundColor;
 	QColor m_textShadowColor;
 	QColor m_BBPatternBackground;
+	QColor m_recordingBackgroundColor;
 	bool m_gradient;
 	QSize m_mouseHotspotHand; // QSize must be used because QPoint isn't supported by property system
 	bool m_cursorSetYet;
