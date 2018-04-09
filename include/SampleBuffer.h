@@ -32,6 +32,8 @@
 #include <samplerate.h>
 
 #include "lmms_export.h"
+#include <vector>
+
 #include "interpolation.h"
 #include "lmms_basics.h"
 #include "lmms_math.h"
@@ -53,6 +55,8 @@ class LMMS_EXPORT SampleBuffer : public QObject, public sharedObject
 	Q_OBJECT
 	MM_OPERATORS
 public:
+	typedef std::vector<sampleFrame, MmAllocator<sampleFrame>> DataVector;
+
 	enum LoopMode {
 		LoopOff = 0,
 		LoopOn,
@@ -113,6 +117,8 @@ public:
 
 	friend void swap(SampleBuffer & first, SampleBuffer & second) noexcept;
 	SampleBuffer& operator= (const SampleBuffer that);
+
+	SampleBuffer(SampleBuffer::DataVector &&movedData);
 
 	virtual ~SampleBuffer();
 
@@ -191,7 +197,7 @@ public:
 
 	inline f_cnt_t frames() const
 	{
-		return m_frames;
+		return m_data.size ();
 	}
 
 	inline float amplification() const
@@ -231,7 +237,7 @@ public:
 
 	inline const sampleFrame * data() const
 	{
-		return m_data;
+		return m_data.data();
 	}
 
 	QString openAudioFile() const;
@@ -251,16 +257,22 @@ public:
 	// dataUnlock(), out of loops for efficiency
 	inline sample_t userWaveSample(const float sample) const
 	{
-		f_cnt_t frames = m_frames;
-		sampleFrame * data = m_data;
-		const float frame = sample * frames;
-		f_cnt_t f1 = static_cast<f_cnt_t>(frame) % frames;
+		f_cnt_t dataFrames = frames();
+		const sampleFrame * data = this->data();
+		const float frame = sample * dataFrames;
+		f_cnt_t f1 = static_cast<f_cnt_t>(frame) % dataFrames;
 		if (f1 < 0)
 		{
-			f1 += frames;
+			f1 += dataFrames;
 		}
-		return linearInterpolate(data[f1][0], data[(f1 + 1) % frames][0], fraction(frame));
+		return linearInterpolate(data[f1][0], data[(f1 + 1) % dataFrames][0], fraction(frame));
 	}
+
+	bool tryDataReadLock ()
+	{
+		return m_varLock.tryLockForRead ();
+	}
+
 
 	void dataReadLock()
 	{
@@ -272,6 +284,14 @@ public:
 		m_varLock.unlock();
 	}
 
+	/**
+	 * @brief Add data to the buffer,
+	 * @param begin	Beginning of an InputIterator.
+	 * @param end	End of an InputIterator.
+	 *
+	 * @warning That locks m_varLock for write.
+	 */
+	void addData(const DataVector::iterator begin, const DataVector::iterator end);
 
 public slots:
 	void setAudioFile(const QString & audioFile);
@@ -284,6 +304,15 @@ public slots:
 
 private:
 	static sample_rate_t mixerSampleRate();
+	// HACK: libsamplerate < 0.1.8 doesn't get read-only variables
+	//	     as const. It has been fixed in 0.1.9 but has not been
+	//		 shipped for some distributions.
+	//		 This function just returns a variable that should have
+	//		 been `const` as non-const to bypass using 0.1.9.
+	inline static sampleFrame * libSampleRateSrc (const sampleFrame *ptr)
+	{
+		return const_cast<sampleFrame*>(ptr);
+	}
 
 	void update(bool keepSettings = false);
 
@@ -311,12 +340,15 @@ private:
 		sample_rate_t & samplerate
 	);
 
+	inline sampleFrame * data()
+	{
+		return m_data.data();
+	}
+
 	QString m_audioFile;
-	sampleFrame * m_origData;
-	f_cnt_t m_origFrames;
-	sampleFrame * m_data;
+	DataVector m_origData;
+	DataVector m_data;
 	mutable QReadWriteLock m_varLock;
-	f_cnt_t m_frames;
 	f_cnt_t m_startFrame;
 	f_cnt_t m_endFrame;
 	f_cnt_t m_loopStartFrame;
@@ -326,7 +358,7 @@ private:
 	float m_frequency;
 	sample_rate_t m_sampleRate;
 
-	sampleFrame * getSampleFragment(
+	const sampleFrame * getSampleFragment(
 		f_cnt_t index,
 		f_cnt_t frames,
 		LoopMode loopMode,
