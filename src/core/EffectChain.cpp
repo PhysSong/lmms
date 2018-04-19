@@ -176,10 +176,14 @@ void EffectChain::moveDown( Effect * _effect )
 			}
 		}
 
+		Engine::mixer()->requestChangeInModel();
 		Effect * temp = m_effects[i + 1];
 		m_effects[i + 1] = _effect;
 		m_effects[i] = temp;
+		Engine::mixer()->doneChangeInModel();
 	}
+
+	emit dataChanged();
 }
 
 
@@ -199,10 +203,14 @@ void EffectChain::moveUp( Effect * _effect )
 			}
 		}
 
+		Engine::mixer()->requestChangeInModel();
 		Effect * temp = m_effects[i - 1];
 		m_effects[i - 1] = _effect;
 		m_effects[i] = temp;
+		Engine::mixer()->doneChangeInModel();
 	}
+
+	emit dataChanged();
 }
 
 

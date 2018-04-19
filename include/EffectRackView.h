@@ -73,11 +73,15 @@ private:
 		return castModel<EffectChain>();
 	}
 
+	EffectView* createEffectView(Effect* effect);
+
 
 	QVector<EffectView *> m_effectViews;
 
 	GroupBox* m_effectsGroupBox;
 	QScrollArea* m_scrollArea;
+
+	bool m_needToRecreateViews;
 
 	int m_lastY;
 
