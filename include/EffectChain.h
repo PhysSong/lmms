@@ -49,6 +49,7 @@ public:
 	}
 
 	void appendEffect( Effect * _effect );
+	void replaceEffect( Effect * _effect, int _index );
 	void removeEffect( Effect * _effect );
 	void moveDown( Effect * _effect );
 	void moveUp( Effect * _effect );

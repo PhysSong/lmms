@@ -133,6 +133,37 @@ void EffectRackView::moveDown( EffectView* view )
 
 
 
+void EffectRackView::replacePlugin( EffectView* view )
+{
+	EffectSelectDialog esd( this );
+	esd.exec();
+
+	if( esd.result() == QDialog::Rejected )
+	{
+		return;
+	}
+
+	Effect * fx = esd.instantiateSelectedPlugin( fxChain() );
+	int idx = m_effectViews.indexOf( view );
+	fxChain()->replaceEffect( fx, idx );
+	update();
+
+	// Find the effectView, and show the controls
+	for( QVector<EffectView *>::Iterator vit = m_effectViews.begin();
+					vit != m_effectViews.end(); ++vit )
+	{
+		if( ( *vit )->effect() == fx )
+		{
+			( *vit )->editControls();
+
+			break;
+		}
+	}
+}
+
+
+
+
 void EffectRackView::deletePlugin( EffectView* view )
 {
 	Effect * e = view->effect();
@@ -172,6 +203,9 @@ void EffectRackView::update()
 					this, SLOT( moveUp( EffectView * ) ) );
 			connect( view, SIGNAL( moveDown( EffectView * ) ),
 				this, SLOT( moveDown( EffectView * ) ) );
+			connect( view, SIGNAL( replacePlugin( EffectView * ) ),
+				this, SLOT( replacePlugin( EffectView * ) ),
+							Qt::QueuedConnection );
 			connect( view, SIGNAL( deletePlugin( EffectView * ) ),
 				this, SLOT( deletePlugin( EffectView * ) ),
 							Qt::QueuedConnection );

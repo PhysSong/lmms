@@ -214,6 +214,14 @@ void EffectView::moveDown()
 
 
 
+void EffectView::replacePlugin()
+{
+	emit replacePlugin( this );
+}
+
+
+
+
 void EffectView::deletePlugin()
 {
 	emit deletePlugin( this );
@@ -252,8 +260,12 @@ void EffectView::contextMenuEvent( QContextMenuEvent * )
 						tr( "Move &down" ),
 						this, SLOT( moveDown() ) );
 	contextMenu->addSeparator();
+	contextMenu->addAction(
+						tr( "Replace this plugin" ),
+						this, SLOT( replacePlugin() ) );
+	contextMenu->addSeparator();
 	contextMenu->addAction( embed::getIconPixmap( "cancel" ),
-						tr( "&Remove this plugin" ),
+						tr( "Remove this plugin" ),
 						this, SLOT( deletePlugin() ) );
 	contextMenu->addSeparator();
 	contextMenu->addHelpAction();

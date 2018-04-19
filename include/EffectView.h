@@ -62,6 +62,7 @@ public slots:
 	void editControls();
 	void moveUp();
 	void moveDown();
+	void replacePlugin();
 	void deletePlugin();
 	void displayHelp();
 	void closeEffects();
@@ -70,6 +71,7 @@ public slots:
 signals:
 	void moveUp( EffectView * _plugin );
 	void moveDown( EffectView * _plugin );
+	void replacePlugin( EffectView * _plugin );
 	void deletePlugin( EffectView * _plugin );
 
 

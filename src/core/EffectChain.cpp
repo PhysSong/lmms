@@ -131,6 +131,18 @@ void EffectChain::appendEffect( Effect * _effect )
 
 
 
+void EffectChain::replaceEffect( Effect * _effect, int _index )
+{
+	Engine::mixer()->requestChangeInModel();
+	m_effects.replace( _index, _effect );
+	Engine::mixer()->doneChangeInModel();
+
+	emit dataChanged();
+}
+
+
+
+
 void EffectChain::removeEffect( Effect * _effect )
 {
 	Engine::mixer()->requestChangeInModel();

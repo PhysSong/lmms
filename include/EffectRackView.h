@@ -51,6 +51,7 @@ public slots:
 	void clearViews();
 	void moveUp( EffectView* view );
 	void moveDown( EffectView* view );
+	void replacePlugin( EffectView* view );
 	void deletePlugin( EffectView* view );
 
 
