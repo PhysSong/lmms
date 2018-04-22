@@ -112,7 +112,6 @@ void EffectChain::loadSettings( const QDomElement & _this )
 		}
 		node = node.nextSibling();
 	}
-
 	emit dataChanged();
 }
 
@@ -146,7 +145,6 @@ void EffectChain::replaceEffect( Effect * _effect, int _index )
 void EffectChain::removeEffect( Effect * _effect )
 {
 	Engine::mixer()->requestChangeInModel();
-
 	Effect ** found = qFind( m_effects.begin(), m_effects.end(), _effect );
 	if( found == m_effects.end() )
 	{
@@ -154,34 +152,7 @@ void EffectChain::removeEffect( Effect * _effect )
 		return;
 	}
 	m_effects.erase( found );
-
 	Engine::mixer()->doneChangeInModel();
-	emit dataChanged();
-}
-
-
-
-
-void EffectChain::moveDown( Effect * _effect )
-{
-	if( _effect != m_effects.last() )
-	{
-		int i = 0;
-		for( EffectList::Iterator it = m_effects.begin();
-					it != m_effects.end(); it++, i++ )
-		{
-			if( *it == _effect )
-			{
-				break;
-			}
-		}
-
-		Engine::mixer()->requestChangeInModel();
-		Effect * temp = m_effects[i + 1];
-		m_effects[i + 1] = _effect;
-		m_effects[i] = temp;
-		Engine::mixer()->doneChangeInModel();
-	}
 
 	emit dataChanged();
 }
@@ -202,11 +173,32 @@ void EffectChain::moveUp( Effect * _effect )
 				break;
 			}
 		}
-
 		Engine::mixer()->requestChangeInModel();
-		Effect * temp = m_effects[i - 1];
-		m_effects[i - 1] = _effect;
-		m_effects[i] = temp;
+		std::swap( m_effects[i - 1], m_effects[i]);
+		Engine::mixer()->doneChangeInModel();
+	}
+
+	emit dataChanged();
+}
+
+
+
+
+void EffectChain::moveDown( Effect * _effect )
+{
+	if( _effect != m_effects.last() )
+	{
+		int i = 0;
+		for( EffectList::Iterator it = m_effects.begin();
+					it != m_effects.end(); it++, i++ )
+		{
+			if( *it == _effect )
+			{
+				break;
+			}
+		}
+		Engine::mixer()->requestChangeInModel();
+		std::swap( m_effects[i + 1], m_effects[i]);
 		Engine::mixer()->doneChangeInModel();
 	}
 
@@ -240,7 +232,6 @@ bool EffectChain::processAudioBuffer( sampleFrame * _buf, const fpp_t _frames, b
 			}
 		}
 	}
-
 	return moreEffects;
 }
 
@@ -269,7 +260,6 @@ void EffectChain::clear()
 	emit aboutToClear();
 
 	Engine::mixer()->requestChangeInModel();
-
 	m_enabledModel.setValue( false );
 	while( m_effects.count() )
 	{
@@ -277,6 +267,5 @@ void EffectChain::clear()
 		m_effects.pop_back();
 		delete e;
 	}
-
 	Engine::mixer()->doneChangeInModel();
 }

@@ -124,6 +124,30 @@ void EffectRackView::moveDown( EffectView* view )
 
 
 
+void EffectRackView::addEffect()
+{
+	EffectSelectDialog esd( this );
+	esd.exec();
+
+	if( esd.result() == QDialog::Rejected )
+	{
+		return;
+	}
+
+	Effect * fx = esd.instantiateSelectedPlugin( fxChain() );
+	EffectView * view = createEffectView( fx );
+
+	fxChain()->m_enabledModel.setValue( true );
+	m_effectViews.append( view );
+	m_needToRecreateViews = false;
+	fxChain()->appendEffect( fx );
+
+	view->editControls();
+}
+
+
+
+
 void EffectRackView::replacePlugin( EffectView* view )
 {
 	EffectSelectDialog esd( this );
@@ -194,42 +218,18 @@ void EffectRackView::update()
 
 
 
-void EffectRackView::addEffect()
-{
-	EffectSelectDialog esd( this );
-	esd.exec();
-
-	if( esd.result() == QDialog::Rejected )
-	{
-		return;
-	}
-
-	Effect * fx = esd.instantiateSelectedPlugin( fxChain() );
-	EffectView * view = createEffectView( fx );
-
-	fxChain()->m_enabledModel.setValue( true );
-	m_effectViews.append( view );
-	m_needToRecreateViews = false;
-	fxChain()->appendEffect( fx );
-
-	view->editControls();
-}
-
-
-
-
 EffectView* EffectRackView::createEffectView(Effect* effect)
 {
 	EffectView* view = new EffectView( effect, m_scrollArea->widget() );
 	connect( view, SIGNAL( moveUp( EffectView * ) ),
 			this, SLOT( moveUp( EffectView * ) ) );
 	connect( view, SIGNAL( moveDown( EffectView * ) ),
-		this, SLOT( moveDown( EffectView * ) ) );
+			this, SLOT( moveDown( EffectView * ) ) );
 	connect( view, SIGNAL( replacePlugin( EffectView * ) ),
-		this, SLOT( replacePlugin( EffectView * ) ),
+			this, SLOT( replacePlugin( EffectView * ) ),
 					Qt::QueuedConnection );
 	connect( view, SIGNAL( deletePlugin( EffectView * ) ),
-		this, SLOT( deletePlugin( EffectView * ) ),
+			this, SLOT( deletePlugin( EffectView * ) ),
 					Qt::QueuedConnection );
 
 	return view;
