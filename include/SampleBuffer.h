@@ -293,6 +293,8 @@ public:
 	 */
 	void addData(const DataVector::iterator begin, const DataVector::iterator end);
 
+	void resetData(DataVector &&newData);
+
 public slots:
 	void setAudioFile(const QString & audioFile);
 	void loadFromBase64(const QString & data);

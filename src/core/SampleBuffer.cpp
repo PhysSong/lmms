@@ -1495,6 +1495,18 @@ void SampleBuffer::addData(const DataVector::iterator begin, const DataVector::i
 	update();
 }
 
+void SampleBuffer::resetData(DataVector &&newData)
+{
+	m_varLock.lockForWrite();
+	{
+		m_data.clear();
+		m_origData = std::move(newData);
+	}
+	m_varLock.unlock();
+
+	update();
+}
+
 SampleBuffer::handleState::handleState(bool varyingPitch, int interpolationMode) :
 	m_frameIndex(0),
 	m_varyingPitch(varyingPitch),
