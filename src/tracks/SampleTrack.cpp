@@ -289,6 +289,7 @@ void SampleTCO::saveSettings( QDomDocument & _doc, QDomElement & _this )
 	}
 
 	_this.setAttribute( "sample_rate", m_sampleBuffer->sampleRate());
+	_this.setAttribute ("is_record", isRecord ());
 	if( usesCustomClipColor() )
 	{
 		_this.setAttribute( "color", color().name() );
@@ -332,6 +333,10 @@ void SampleTCO::loadSettings( const QDomElement & _this )
 	{
 		m_sampleBuffer->setReversed(true);
 		emit wasReversed(); // tell SampleTCOView to update the view
+	}
+
+	if (_this.hasAttribute ("is_record")) {
+		setRecord (_this.attribute ("is_record").toInt ());
 	}
 }
 
