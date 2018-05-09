@@ -207,12 +207,6 @@ SampleBuffer& SampleBuffer::operator=(SampleBuffer that)
 
 
 
-SampleBuffer::~SampleBuffer()
-{
-}
-
-
-
 void SampleBuffer::sampleRateChanged()
 {
 	update(true);
@@ -320,7 +314,7 @@ void SampleBuffer::update(bool keepSettings)
 		{
 			// sample couldn't be decoded, create buffer containing
 			// one sample-frame
-			m_data.resize (1, {0,0});
+			m_data.clear ();
 			m_loopStartFrame = m_startFrame = 0;
 			m_loopEndFrame = m_endFrame = 1;
 		}
@@ -334,7 +328,7 @@ void SampleBuffer::update(bool keepSettings)
 	{
 		// neither an audio-file nor a buffer to copy from, so create
 		// buffer containing one sample-frame
-		m_data.resize (1, {0,0});
+		m_data.clear ();
 		m_loopStartFrame = m_startFrame = 0;
 		m_loopEndFrame = m_endFrame = 1;
 	}
@@ -1244,11 +1238,8 @@ QString & SampleBuffer::toBase64(QString & dst) const
 
 SampleBuffer * SampleBuffer::resample(const sample_rate_t srcSR, const sample_rate_t dstSR )
 {
-	sampleFrame * data = data();
-	const f_cnt_t frames = frames();
-	const f_cnt_t dstFrames = static_cast<f_cnt_t>((frames / (float) srcSR) * (float) dstSR);
-	SampleBuffer * dstSB = new SampleBuffer(dstFrames);
-	sampleFrame * dstBuf = dstSB->m_origData.data();
+	const f_cnt_t dstFrames = static_cast<f_cnt_t>((frames() / (float) srcSR) * (float) dstSR);
+	DataVector outputData(dstFrames);
 
 	// yeah, libsamplerate, let's rock with sinc-interpolation!
 	int error;
@@ -1257,9 +1248,9 @@ SampleBuffer * SampleBuffer::resample(const sample_rate_t srcSR, const sample_ra
 	{
 		SRC_DATA srcData;
 		srcData.end_of_input = 1;
-		srcData.data_in = data->data();
-		srcData.data_out = dstBuf->data();
-		srcData.input_frames = frames;
+		srcData.data_in = data()->data();
+		srcData.data_out = outputData.data()->data();
+		srcData.input_frames = frames();
 		srcData.output_frames = dstFrames;
 		srcData.src_ratio = (double) dstSR / srcSR;
 		if ((error = src_process(state, &srcData)))
@@ -1272,8 +1263,8 @@ SampleBuffer * SampleBuffer::resample(const sample_rate_t srcSR, const sample_ra
 	{
 		printf("Error: src_new() failed in sample_buffer.cpp!\n");
 	}
-	dstSB->update();
-	return dstSB;
+
+	return new SampleBuffer(std::move(outputData));
 }
 
 

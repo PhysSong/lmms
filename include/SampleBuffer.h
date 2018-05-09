@@ -120,7 +120,7 @@ public:
 
 	SampleBuffer(SampleBuffer::DataVector &&movedData);
 
-	virtual ~SampleBuffer();
+	virtual ~SampleBuffer() = default;
 
 	bool play(
 		sampleFrame * ab,
