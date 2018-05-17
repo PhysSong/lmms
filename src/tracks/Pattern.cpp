@@ -32,7 +32,6 @@
 #include <QPushButton>
 #include <QTimer>
 
-#include "AudioSampleRecorder.h"
 #include "BBTrackContainer.h"
 #include "DeprecationHelper.h"
 #include "embed.h"
