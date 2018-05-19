@@ -365,7 +365,7 @@ public slots:
 	void addBBTrack();
 
 signals:
-	void beforeRecord ();
+	void beforeRecordOn (TimePos time);
 
 private slots:
 	void insertBar();

@@ -202,7 +202,7 @@ public slots:
 	void updateTcos();
 	void setPlayingTcos( bool isPlaying );
 	void updateEffectChannel();
-	void beforeRecord ();
+	void beforeRecordOn (TimePos time);
 	void toggleRecord();
 	void playbackPositionChanged();
 

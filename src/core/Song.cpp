@@ -114,6 +114,7 @@ Song::Song() :
 			this, SLOT( masterPitchChanged() ) );*/
 
 	qRegisterMetaType<Note>( "Note" );
+	qRegisterMetaType<TimePos>("TimePos");
 	setType( SongContainer );
 }
 
@@ -249,6 +250,10 @@ void Song::processNextBuffer()
 			setToTime(begin);
 			m_vstSyncController.setPlaybackJumped(true);
 			emit updateSampleTracks();
+			if (isRecording())
+			{
+				emit beforeRecordOn(getPlayPos());
+			}
 			return true;
 		}
 		return false;
@@ -266,6 +271,7 @@ void Song::processNextBuffer()
 		m_vstSyncController.setPlaybackJumped(true);
 		getPlayPos().setJumped(false);
 	}
+
 
 	const auto framesPerTick = Engine::framesPerTick();
 	const auto framesPerPeriod = Engine::mixer()->framesPerPeriod();
@@ -492,8 +498,6 @@ void Song::record()
 
 void Song::playAndRecord()
 {
-	emit beforeRecord ();
-
 	playSong();
 	m_recording = true;
 }
