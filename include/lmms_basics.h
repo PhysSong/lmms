@@ -32,9 +32,9 @@
 
 #ifdef LMMS_HAVE_STDINT_H
 #include <cstdint>
-#include <array>
 #endif
 
+#include <array>
 
 typedef int32_t bar_t;
 typedef int32_t tick_t;
@@ -57,7 +57,7 @@ typedef uint16_t fx_ch_t;			// FX-channel (0 to MAX_EFFECT_CHANNEL)
 typedef uint32_t jo_id_t;			// (unique) ID of a journalling object
 
 
-// windows headers define "min" and "max" macros, breaking the methods bwloe
+// windows headers define "min" and "max" macros, breaking the methods below
 #undef min
 #undef max
 
@@ -135,6 +135,11 @@ using         sampleFrame = std::array<sample_t,  DEFAULT_CHANNELS>;
 using surroundSampleFrame = std::array<sample_t, SURROUND_CHANNELS>;
 #define ALIGN_SIZE 16
 
+
+static_assert (sizeof(sampleFrame) == sizeof(sample_t) * DEFAULT_CHANNELS,
+			   "sampleFrame's size is not equal to the sum of its parts");
+static_assert (sizeof(surroundSampleFrame) == sizeof(sample_t) * SURROUND_CHANNELS,
+			   "surroundSampleFrame's size is not equal to the sum of its parts");
 
 #define STRINGIFY(s) STR(s)
 #define STR(PN)	#PN
