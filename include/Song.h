@@ -331,7 +331,7 @@ public slots:
 	void addBBTrack();
 
 signals:
-	void beforeRecord ();
+	void beforeRecordOn (MidiTime time);
 
 private slots:
 	void insertBar();
