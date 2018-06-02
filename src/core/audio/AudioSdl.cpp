@@ -99,6 +99,7 @@ AudioSdl::AudioSdl( bool & _success_ful, Mixer*  _mixer ) :
 	_success_ful = true;
 
 #ifdef LMMS_HAVE_SDL2
+#ifndef LMMS_BUILD_LINUX
 	// Workaround for a race condition that causes SDL to segfault
 	SDL_Delay(50);
 
@@ -117,7 +118,10 @@ AudioSdl::AudioSdl( bool & _success_ful, Mixer*  _mixer ) :
 		m_supportsCapture = false;
 		qWarning ( "Couldn't open SDL capture device: %s\n", SDL_GetError ());
 	}
-
+#else
+	qWarning("SDL: Recording has been disabled on Linux since it "
+			 "appears to have a growing latency");
+#endif
 #endif
 }
 
