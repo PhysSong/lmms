@@ -880,6 +880,8 @@ void SampleTrack::beforeRecordOn(TimePos time)
 		}
 
 		if (! isRecordTCOExist) {
+			Engine::mixer()->requestChangeInModel();
+
 			auto fallbackRecordTCO = static_cast<SampleTCO*>(createTCO (0));
 
 			fallbackRecordTCO->setRecord (true);
@@ -891,6 +893,8 @@ void SampleTrack::beforeRecordOn(TimePos time)
 			fallbackRecordTCO->setIsPlaying (false);
 
 			fallbackRecordTCO->setAutoResize (true);
+			Engine::mixer()->doneChangeInModel();
+
 		}
 	}
 }
