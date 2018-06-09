@@ -140,6 +140,9 @@ public:
 	// Will copy the state of a TCO to another TCO
 	static void copyStateTo( TrackContentObject *src, TrackContentObject *dst );
 
+	bool isRecording() const;
+	void setIsRecording(bool value);
+
 public slots:
 	void toggleMute();
 
@@ -169,6 +172,8 @@ private:
 	BoolModel m_mutedModel;
 	BoolModel m_soloModel;
 	bool m_autoResize;
+
+	bool m_isRecording{false};
 
 	bool m_selectViewOnCreate;
 

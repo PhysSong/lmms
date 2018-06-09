@@ -149,6 +149,16 @@ void TrackContentObject::copyStateTo( TrackContentObject *src, TrackContentObjec
 	}
 }
 
+bool TrackContentObject::isRecording() const
+{
+	return m_isRecording;
+}
+
+void TrackContentObject::setIsRecording(bool value)
+{
+	m_isRecording = value;
+}
+
 
 
 
