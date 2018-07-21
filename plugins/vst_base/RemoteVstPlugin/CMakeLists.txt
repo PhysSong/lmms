@@ -10,7 +10,7 @@ CHECK_CXX_DEFINE(IS_WIN "_WIN32")
 CHECK_CXX_DEFINE(IS_WIN64 "_WIN64")
 CHECK_CXX_DEFINE(IS_MINGW "__MINGW32__")
 
-if(NOT IS_WIN)
+if(NOT APPLE AND NOT IS_WIN)
 	message(FATAL_ERROR "Toolchain used does not target windows.")
 ENDIF()
 
@@ -26,12 +26,18 @@ FOREACH( OUTPUTCONFIG ${CMAKE_CONFIGURATION_TYPES} )
 	SET("CMAKE_RUNTIME_OUTPUT_DIRECTORY_${OUTPUTCONFIG}" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
 ENDFOREACH()
 
-set(EXE_NAME RemoteVstPlugin${BITNESS})
+if(APPLE)
+	set(EXE_NAME RemoteVstPlugin)
+else()
+	set(EXE_NAME RemoteVstPlugin${BITNESS})
+endif()
 add_executable(${EXE_NAME} WIN32
 	../RemoteVstPlugin.cpp
 )
 
-target_link_libraries(${EXE_NAME} ole32)
+if(IS_WIN)
+	target_link_libraries(${EXE_NAME} ole32)
+endif()
 
 target_include_directories(${EXE_NAME}
 	PRIVATE 

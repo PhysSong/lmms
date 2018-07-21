@@ -8,6 +8,7 @@ INCLUDE(ExternalProject)
 # These variables are not meant to be used normally, except packaging
 SET(REMOTE_VST_PLUGIN_FILEPATH_32 "32/RemoteVstPlugin32" CACHE STRING "Relative file path to RemoteVstPlugin32")
 SET(REMOTE_VST_PLUGIN_FILEPATH_64 "RemoteVstPlugin64" CACHE STRING "Relative file path to RemoteVstPlugin64")
+SET(REMOTE_VST_PLUGIN_FILEPATH_MAC "RemoteVstPlugin" CACHE STRING "Relative file path to macOS version of RemoteVstPlugin")
 
 ADD_SUBDIRECTORY(vstbase)
 
@@ -47,4 +48,8 @@ ENDIF()
 # build 64 bit version of RemoteVstPlugin
 IF(WANT_VST_64)
 	INCLUDE("${CMAKE_CURRENT_LIST_DIR}/RemoteVstPlugin64.cmake")
+ENDIF()
+# build macOS version of RemoteVstPlugin
+IF(WANT_VST AND LMMS_BUILD_APPLE)
+	INCLUDE("${CMAKE_CURRENT_LIST_DIR}/RemoteVstPluginMac.cmake")
 ENDIF()
