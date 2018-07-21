@@ -118,7 +118,7 @@ namespace lmms
 
 enum class ExecutableType
 {
-	Unknown, Win32, Win64, Linux64,
+	Unknown, Win32, Win64, Linux64, MacOS
 };
 
 VstPlugin::VstPlugin( const QString & _plugin ) :
@@ -133,6 +133,9 @@ VstPlugin::VstPlugin( const QString & _plugin ) :
 	setSplittedChannels( true );
 
 	auto pluginType = ExecutableType::Unknown;
+#ifdef LMMS_BUILD_APPLE
+	auto pluginType = ExecutableType::MacOS;
+#else
 #ifdef LMMS_BUILD_LINUX
 	QFileInfo fi(m_plugin);
 	if (fi.suffix() == "so")
@@ -161,6 +164,7 @@ VstPlugin::VstPlugin( const QString & _plugin ) :
 			qCritical() << "Error while determining PE file's machine type: " << e.what();
 		}
 	}
+#endif
 
 	switch(pluginType)
 	{
@@ -179,6 +183,9 @@ VstPlugin::VstPlugin( const QString & _plugin ) :
 		m_failed = true;
 		return;
 	}
+#else
+	tryLoad( REMOTE_VST_PLUGIN_FILEPATH_MAC );
+#endif
 
 	setTempo( Engine::getSong()->getTempo() );
 

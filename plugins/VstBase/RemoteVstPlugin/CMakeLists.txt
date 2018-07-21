@@ -25,10 +25,12 @@ ENDFOREACH()
 ADD_SUBDIRECTORY("${LMMS_SOURCE_DIR}/src/common" common)
 
 if(NOT IS_WIN)
-set(EXE_NAME NativeLinuxRemoteVstPlugin${BITNESS})
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/")
+	set(EXE_NAME NativeLinuxRemoteVstPlugin${BITNESS})
+	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/")
+elseif(APPLE)
+	set(EXE_NAME RemoteVstPlugin)
 else()
-set(EXE_NAME RemoteVstPlugin${BITNESS})
+	set(EXE_NAME RemoteVstPlugin${BITNESS})
 endif()
 add_executable(${EXE_NAME} WIN32
 	../RemoteVstPlugin.cpp
