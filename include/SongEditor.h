@@ -34,6 +34,7 @@
 #include "Editor.h"
 #include "TrackContainerView.h"
 #include "PositionLine.h"
+#include "SampleTrack.h"
 
 class QLabel;
 class QScrollBar;
@@ -174,6 +175,8 @@ public:
 
 	SongEditor* m_editor;
 
+	SampleTrack::RecordingChannel globalRecordChannel() const;
+
 protected:
 	void resizeEvent( QResizeEvent * event ) override;
 	void changeEvent( QEvent * ) override;
@@ -188,6 +191,7 @@ protected slots:
 	void adjustUiAfterProjectLoad();
 
 	void updateSnapLabel();
+	void onRecordChannelSelected(QAction *action);
 
 signals:
 	void playTriggered();
@@ -213,6 +217,8 @@ private:
 
 	QAction* m_insertBarAction;
 	QAction* m_removeBarAction;
+
+	SampleTrack::RecordingChannel m_globalRecordChannel = SampleTrack::RecordingChannel::Stereo;
 };
 
 #endif
