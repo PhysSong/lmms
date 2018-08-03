@@ -36,6 +36,7 @@ SET(LMMS_PLUGIN_LIST
 	DualFilter
 	dynamics_processor
 	Eq
+	FBSynth
 	Flanger
 	HydrogenImport
 	ladspa_browser
