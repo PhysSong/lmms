@@ -207,27 +207,23 @@ void SampleBuffer::changeAudioFile(QString audioFile)
 		// decoder first if filename extension matches "ogg"
 		if( fileInfo.suffix() == "ogg" )
 		{
-			fileData = decodeSampleOGGVorbis( file, channels, samplerate );
+			fileData = decodeSampleOGGVorbis( file, channels, samplerate, fileLoadError);
 		}
 #endif
-		if(fileData.empty ())
+		if( fileInfo.suffix() != "ogg" || fileLoadError)
 		{
-			fileData = decodeSampleSF( file, channels, samplerate, loadingWarning );
+			fileData = decodeSampleSF( file, channels, samplerate, loadingWarning, fileLoadError);
 		}
 #ifdef LMMS_HAVE_OGGVORBIS
-		if( fileData.empty () )
+		if( fileLoadError )
 		{
-			fileData = decodeSampleOGGVorbis( file, channels, samplerate );
+			fileData = decodeSampleOGGVorbis( file, channels, samplerate, fileLoadError);
 		}
 #endif
-		if( fileData.empty () )
+		if( fileLoadError )
 		{
-			fileData = decodeSampleDS( file, channels, samplerate );
+			fileData = decodeSampleDS( file, channels, samplerate);
 		}
-	}
-
-	if (fileData.empty ()) {
-		fileLoadError = true;
 	}
 
 	if (! fileLoadError) {
@@ -373,6 +369,7 @@ SampleBuffer::DataVector SampleBuffer::decodeSampleSF( QString _f,
 				"sample %s: %s", _f, sf_strerror( NULL ) );
 #endif
 		loadingWarning = tr("SoundFile: Could not load: %1").arg(sf_strerror( NULL ));
+		isError = true;
 	}
 	f.close();
 
@@ -454,6 +451,7 @@ SampleBuffer::DataVector SampleBuffer::decodeSampleOGGVorbis(QString _f,
 	if( f->open( QFile::ReadOnly ) == false )
 	{
 		delete f;
+		isError = true;
 		return {};
 	}
 
