@@ -134,6 +134,11 @@ public:
 
 	QPair<QPolygonF, QPolygonF>  visualizeToPoly( const QRect & _dr, const QRect & _clip, f_cnt_t _from_frame = 0, f_cnt_t _to_frame = 0) const;
 
+	inline void resetAudioFile()
+	{
+		m_audioFile = "";
+	}
+
 	inline const QString & audioFile() const
 	{
 		return m_audioFile;
@@ -332,13 +337,14 @@ protected:
 
 	static DataVector convertIntToFloat(int_sample_t * & _ibuf, f_cnt_t _frames, int _channels);
 
-	static DataVector decodeSampleSF(QString _f, ch_cnt_t & _channels, sample_rate_t & _sample_rate, QString &loadingWarning);
+	static DataVector decodeSampleSF(QString _f, ch_cnt_t & _channels, sample_rate_t & _sample_rate, QString &loadingWarning, bool &isError);
 #ifdef LMMS_HAVE_OGGVORBIS
-	static DataVector decodeSampleOGGVorbis( QString _f,
-						ch_cnt_t & _channels,
-						sample_rate_t & _sample_rate);
+	static DataVector decodeSampleOGGVorbis(QString _f,
+											ch_cnt_t & _channels,
+											sample_rate_t & _sample_rate,
+											bool &isError);
 #endif
-	static DataVector decodeSampleDS( QString _f, ch_cnt_t & _channels, sample_rate_t & _sample_rate);
+	static DataVector decodeSampleDS(QString _f, ch_cnt_t & _channels, sample_rate_t & _sample_rate);
 
 	inline sampleFrame * data()
 	{

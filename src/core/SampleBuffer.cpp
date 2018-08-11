@@ -148,7 +148,6 @@ void SampleBuffer::internalAddData(const DataVector &vector, sample_rate_t sampl
 
 void SampleBuffer::internalResetData(DataVector &&newData, sample_rate_t dataSampleRate) {
 	Q_UNUSED(dataSampleRate);
-	m_audioFile = QString();
 	m_data = std::move (newData);
 }
 
@@ -208,27 +207,23 @@ void SampleBuffer::changeAudioFile(QString audioFile)
 		// decoder first if filename extension matches "ogg"
 		if( fileInfo.suffix() == "ogg" )
 		{
-			fileData = decodeSampleOGGVorbis( file, channels, samplerate );
+			fileData = decodeSampleOGGVorbis( file, channels, samplerate, fileLoadError);
 		}
 #endif
-		if(fileData.empty ())
+		if( fileInfo.suffix() != "ogg" || fileLoadError)
 		{
-			fileData = decodeSampleSF( file, channels, samplerate, loadingWarning );
+			fileData = decodeSampleSF( file, channels, samplerate, loadingWarning, fileLoadError);
 		}
 #ifdef LMMS_HAVE_OGGVORBIS
-		if( fileData.empty () )
+		if( fileLoadError )
 		{
-			fileData = decodeSampleOGGVorbis( file, channels, samplerate );
+			fileData = decodeSampleOGGVorbis( file, channels, samplerate, fileLoadError);
 		}
 #endif
-		if( fileData.empty () )
+		if( fileLoadError )
 		{
-			fileData = decodeSampleDS( file, channels, samplerate );
+			fileData = decodeSampleDS( file, channels, samplerate);
 		}
-	}
-
-	if (fileData.empty ()) {
-		fileLoadError = true;
 	}
 
 	if (! fileLoadError) {
@@ -280,6 +275,11 @@ SampleBuffer::DataVector
 SampleBuffer::resampleData (const DataVector &inputData, sample_rate_t inputSampleRate,
 							sample_rate_t requiredSampleRate)
 {
+	if (inputData.empty())
+	{
+		// no need to resample empty data
+		return SampleBuffer::DataVector{};
+	}
 	const f_cnt_t dst_frames = static_cast<f_cnt_t>( inputData.size ()/
 					(float) inputSampleRate * (float) requiredSampleRate );
 	DataVector outputData(dst_frames);
@@ -316,7 +316,8 @@ SampleBuffer::resampleData (const DataVector &inputData, sample_rate_t inputSamp
 SampleBuffer::DataVector SampleBuffer::decodeSampleSF( QString _f,
 					ch_cnt_t & _channels,
 					sample_rate_t &_samplerate,
-					QString &loadingWarning)
+					QString &loadingWarning,
+					bool &isError)
 {
 	SNDFILE * snd_file;
 	SF_INFO sf_info;
@@ -369,6 +370,7 @@ SampleBuffer::DataVector SampleBuffer::decodeSampleSF( QString _f,
 				"sample %s: %s", _f, sf_strerror( NULL ) );
 #endif
 		loadingWarning = tr("SoundFile: Could not load: %1").arg(sf_strerror( NULL ));
+		isError = true;
 	}
 	f.close();
 
@@ -432,7 +434,8 @@ long qfileTellCallback( void * _udata )
 
 SampleBuffer::DataVector SampleBuffer::decodeSampleOGGVorbis(QString _f,
 						ch_cnt_t & _channels,
-						sample_rate_t & _samplerate)
+						sample_rate_t & _samplerate,
+						bool &isError)
 {
 	static ov_callbacks callbacks =
 	{
@@ -450,6 +453,7 @@ SampleBuffer::DataVector SampleBuffer::decodeSampleOGGVorbis(QString _f,
 	if( f->open( QFile::ReadOnly ) == false )
 	{
 		delete f;
+		isError = true;
 		return {};
 	}
 
@@ -1041,6 +1045,7 @@ void SampleBuffer::loadFromBase64( const QString & _data , sample_rate_t sampleR
 
 	delete[] dst;
 
+	resetAudioFile();
 	resetData (std::move(input),
 			   sampleRate);
 }
