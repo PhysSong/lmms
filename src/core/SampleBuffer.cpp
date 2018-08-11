@@ -316,7 +316,8 @@ SampleBuffer::resampleData (const DataVector &inputData, sample_rate_t inputSamp
 SampleBuffer::DataVector SampleBuffer::decodeSampleSF( QString _f,
 					ch_cnt_t & _channels,
 					sample_rate_t &_samplerate,
-					QString &loadingWarning)
+					QString &loadingWarning,
+					bool &isError)
 {
 	SNDFILE * snd_file;
 	SF_INFO sf_info;
@@ -433,7 +434,8 @@ long qfileTellCallback( void * _udata )
 
 SampleBuffer::DataVector SampleBuffer::decodeSampleOGGVorbis(QString _f,
 						ch_cnt_t & _channels,
-						sample_rate_t & _samplerate)
+						sample_rate_t & _samplerate,
+						bool &isError)
 {
 	static ov_callbacks callbacks =
 	{
