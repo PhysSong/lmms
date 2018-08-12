@@ -680,6 +680,10 @@ void VestigeInstrumentView::openPlugin()
 
 	// set filters
 	QStringList types;
+#ifdef LMMS_BUILD_APPLE
+	// TODO: Replace this workaround once we handle `.vst` directory bundles.
+	types << tr( "All files (*)" );
+#endif
 	types << tr( "DLL-files (*.dll)" )
 		<< tr( "EXE-files (*.exe)" )
 		;
