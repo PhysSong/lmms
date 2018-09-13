@@ -60,6 +60,18 @@ if(WIN32)
 	target_link_libraries(${EXE_NAME} Qt5::Core)
 endif()
 
+if(APPLE)
+	FIND_PACKAGE(Qt5 COMPONENTS Concurrent REQUIRED)
+	FIND_PACKAGE(Threads REQUIRED)
+
+	TARGET_INCLUDE_DIRECTORIES(RemoteVstPlugin
+		PRIVATE ${Qt5Concurrent_INCLUDE_DIRS}
+	)
+
+	TARGET_LINK_LIBRARIES(RemoteVstPlugin Qt5::Core Qt5::Widgets Qt5::Concurrent)
+	TARGET_LINK_LIBRARIES(RemoteVstPlugin ${CMAKE_THREAD_LIBS})
+endif()
+
 if(IS_MINGW)
 	SET(CMAKE_REQUIRED_FLAGS "-std=c++17")
 
