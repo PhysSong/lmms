@@ -56,8 +56,30 @@
 
 #endif
 
+#ifndef LMMS_BUILD_APPLE
 #define USE_WS_PREFIX
 #include <windows.h>
+#else
+#include <QLibrary>
+#include <QThread>
+#include <QtWidgets>
+#include <QtConcurrent>
+#define HWND QMainWindow *
+#define HINSTANCE void *
+#define DWORD int
+#define WINAPI
+#define LPVOID void *
+#define FreeLibrary(_)
+#define IsWindowVisible(_) (0)
+#define SW_SHOWNORMAL (0)
+#define ShowWindow(_, __)
+#define UpdateWindow(_)
+#define DestroyWindow(_)
+#define WM_USER (0)
+#define PostMessage(_, __, ___, ____)
+#define GetCurrentThreadId() (reinterpret_cast<intptr_t>(QThread::currentThreadId()))
+QCoreApplication *app = NULL;
+#endif
 
 #ifdef USE_MINGW_THREADS_REPLACEMENT
 #	include <mingw.mutex.h>
@@ -121,9 +143,10 @@ class RemoteVstPlugin;
 RemoteVstPlugin * __plugin = NULL;
 
 HWND __MessageHwnd = NULL;
-DWORD __processingThreadId = 0;
+intptr_t __processingThreadId = 0;
 
 
+#ifndef LMMS_BUILD_APPLE
 //Returns the last Win32 error, in string format. Returns an empty string if there is no error.
 std::string GetErrorAsString(DWORD errorMessageID)
 {
@@ -143,6 +166,7 @@ std::string GetErrorAsString(DWORD errorMessageID)
 	return message;
 }
 
+#endif
 
 class RemoteVstPlugin : public RemotePluginClient
 {
@@ -331,9 +355,11 @@ public:
 	static DWORD WINAPI processingThread( LPVOID _param );
 	static bool setupMessageWindow();
 	static DWORD WINAPI guiEventLoop();
+#ifndef LMMS_BUILD_APPLE
 	static LRESULT CALLBACK wndProc( HWND hwnd, UINT uMsg,
 					WPARAM wParam, LPARAM lParam );
 
+#endif
 
 private:
 	enum GuiThreadMessages
@@ -750,7 +776,41 @@ void RemoteVstPlugin::initEditor()
 		return;
 	}
 
+#ifdef LMMS_BUILD_APPLE
+	m_window = new QMainWindow();
 
+	if( m_window == NULL )
+	{
+		debugMessage( "initEditor(): cannot create editor window\n" );
+		return;
+	}
+
+
+	ERect * er;
+	pluginDispatch( effEditGetRect, 0, 0, &er );
+
+	m_windowWidth = er->right - er->left;
+	m_windowHeight = er->bottom - er->top;
+
+	printf("er: left: %d  bottom: %d\n", er->left, er->bottom);
+	printf("er: right: %d  top: %d\n", er->right, er->top);
+	printf("window dimensions: %d x %d\n", m_windowWidth, m_windowHeight);
+
+	m_window->setFixedWidth(m_windowWidth);
+	m_window->setFixedHeight(m_windowHeight);
+
+
+	m_window->show();
+
+	static auto _winId_ = m_window->winId();
+
+	pluginDispatch( effEditOpen, 0, 0, (void *) _winId_);
+
+
+	pluginDispatch( effEditTop );
+
+
+#else
 	HMODULE hInst = GetModuleHandle( NULL );
 	if( hInst == NULL )
 	{
@@ -797,6 +857,7 @@ void RemoteVstPlugin::initEditor()
 	// 64-bit versions of Windows use 32-bit handles for interoperability
 	m_windowID = (intptr_t) m_window;
 #endif
+#endif
 }
 
 
@@ -840,15 +901,18 @@ void RemoteVstPlugin::destroyEditor()
 
 bool RemoteVstPlugin::load( const std::string & _plugin_file )
 {
+#ifndef LMMS_BUILD_APPLE
 	if( ( m_libInst = LoadLibraryW( toWString(_plugin_file).c_str() ) ) == NULL )
 	{
 		DWORD error = GetLastError();
 		debugMessage( "LoadLibrary failed: " + GetErrorAsString(error) );
 		return false;
 	}
+#endif
 
 	typedef AEffect * ( VST_CALL_CONV * mainEntryPointer )
 						( audioMasterCallback );
+#ifndef LMMS_BUILD_APPLE
 	mainEntryPointer mainEntry = (mainEntryPointer)
 				GetProcAddress( m_libInst, "VSTPluginMain" );
 	if( mainEntry == NULL )
@@ -861,6 +925,10 @@ bool RemoteVstPlugin::load( const std::string & _plugin_file )
 		mainEntry = (mainEntryPointer)
 				GetProcAddress( m_libInst, "main" );
 	}
+#else
+	// TODO: Also look for other variations of the main entry name?
+	mainEntryPointer mainEntry = (mainEntryPointer) QLibrary::resolve(_plugin_file.c_str(), "VSTPluginMain");
+#endif
 	if( mainEntry == NULL )
 	{
 		debugMessage( "could not find entry point\n" );
@@ -1758,6 +1826,7 @@ intptr_t RemoteVstPlugin::hostCallback( AEffect * _effect, int32_t _opcode,
 			}
 			__plugin->m_windowWidth = _index;
 			__plugin->m_windowHeight = _value;
+#ifndef LMMS_BUILD_APPLE
 			HWND window = __plugin->m_window;
 			DWORD dwStyle = GetWindowLongPtr( window, GWL_STYLE );
 			RECT windowSize = { 0, 0, (int) _index, (int) _value };
@@ -1767,6 +1836,7 @@ intptr_t RemoteVstPlugin::hostCallback( AEffect * _effect, int32_t _opcode,
 					windowSize.bottom - windowSize.top,
 					SWP_NOACTIVATE | SWP_NOMOVE |
 					SWP_NOOWNERZORDER | SWP_NOZORDER );
+#endif
 			__plugin->sendMessage(
 				message( IdVstPluginEditorGeometry ).
 					addInt( __plugin->m_windowWidth ).
@@ -1974,10 +2044,21 @@ DWORD WINAPI RemoteVstPlugin::processingThread( LPVOID _param )
 		}
 		else
 		{
+#ifndef LMMS_BUILD_APPLE
 			PostMessage( __MessageHwnd,
 					WM_USER,
 					ProcessPluginMessage,
 					(LPARAM) new message( m ) );
+#else
+			// Based on `messageWndProc()`:
+			// TODO: Actually have in guievent loop?
+			_this->queueMessage( m );
+			if( !_this->isProcessing() )
+			{
+				_this->processUIThreadMessages();
+			}
+
+#endif
 		}
 	}
 
@@ -1992,6 +2073,8 @@ DWORD WINAPI RemoteVstPlugin::processingThread( LPVOID _param )
 
 bool RemoteVstPlugin::setupMessageWindow()
 {
+#ifndef LMMS_BUILD_APPLE
+
 	HMODULE hInst = GetModuleHandle( NULL );
 	if( hInst == NULL )
 	{
@@ -2005,6 +2088,7 @@ bool RemoteVstPlugin::setupMessageWindow()
 								hInst, NULL );
 	// install GUI update timer
 	SetTimer( __MessageHwnd, 1000, 50, NULL );
+#endif
 
 	return true;
 }
@@ -2014,6 +2098,7 @@ bool RemoteVstPlugin::setupMessageWindow()
 
 DWORD WINAPI RemoteVstPlugin::guiEventLoop()
 {
+#ifndef LMMS_BUILD_APPLE
 	MSG msg;
 	while( GetMessage( &msg, NULL, 0, 0 ) > 0 )
 	{
@@ -2021,12 +2106,14 @@ DWORD WINAPI RemoteVstPlugin::guiEventLoop()
 		DispatchMessage( &msg );
 	}
 
+#endif
 	return 0;
 }
 
 
 
 
+#ifndef LMMS_BUILD_APPLE
 LRESULT CALLBACK RemoteVstPlugin::wndProc( HWND hwnd, UINT uMsg,
 						WPARAM wParam, LPARAM lParam )
 {
@@ -2075,6 +2162,7 @@ LRESULT CALLBACK RemoteVstPlugin::wndProc( HWND hwnd, UINT uMsg,
 
 
 
+#endif
 
 int main( int _argc, char * * _argv )
 {
@@ -2088,7 +2176,10 @@ int main( int _argc, char * * _argv )
 		return -1;
 	}
 
+#ifndef LMMS_BUILD_APPLE
 	OleInitialize(nullptr);
+#endif
+
 #ifdef LMMS_BUILD_LINUX
 #ifdef LMMS_HAVE_SCHED_H
 	// try to set realtime-priority
@@ -2106,6 +2197,7 @@ int main( int _argc, char * * _argv )
 	}
 #endif
 
+#ifndef LMMS_BUILD_APPLE
 	HMODULE hInst = GetModuleHandle( NULL );
 	if( hInst == NULL )
 	{
@@ -2128,6 +2220,9 @@ int main( int _argc, char * * _argv )
 	{
 		return -1;
 	}
+#else
+	app = new QApplication(_argc, _argv);
+#endif
 
 	{
 	#ifdef SYNC_WITH_SHM_FIFO
@@ -2179,6 +2274,7 @@ int main( int _argc, char * * _argv )
 
 	if( __plugin->isInitialized() )
 	{
+#ifndef LMMS_BUILD_APPLE
 		if( RemoteVstPlugin::setupMessageWindow() == false )
 		{
 			return -1;
@@ -2191,12 +2287,28 @@ int main( int _argc, char * * _argv )
 			return -1;
 		}
 		RemoteVstPlugin::guiEventLoop();
+#else
+#if 1
+		QFutureWatcher<DWORD> processing_thread_watcher;
+
+		QObject::connect(&processing_thread_watcher, SIGNAL(finished()), app, SLOT(quit()), Qt::QueuedConnection);
+
+		QFuture<DWORD> processing_thread_future = QtConcurrent::run(RemoteVstPlugin::processingThread, __plugin);
+
+		processing_thread_watcher.setFuture(processing_thread_future);
+#else
+		QtConcurrent::run(RemoteVstPlugin::processingThread, __plugin);
+#endif
+		app->exec();
+#endif
 	}
 
 
 	delete __plugin;
 
+#ifndef LMMS_BUILD_APPLE
 	OleUninitialize();
+#endif
 	return 0;
 
 }
