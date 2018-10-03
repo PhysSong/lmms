@@ -50,6 +50,7 @@ SET(LMMS_PLUGIN_LIST
 	Lb302
 	MidiImport
 	MidiExport
+	MidiOutInstr
 	MultitapEcho
 	Monstro
 	Nes
