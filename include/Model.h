@@ -69,12 +69,6 @@ public:
 
 	virtual QString fullDisplayName() const;
 
-
-private:
-	QString m_displayName;
-	bool m_defaultConstructed;
-
-
 signals:
 	// emitted if actual data of the model (e.g. values) have changed
 	void dataChanged();
@@ -84,6 +78,10 @@ signals:
 
 	// emitted if properties of the model (e.g. ranges) have changed
 	void propertiesChanged();
+
+private:
+	QString m_displayName;
+	bool m_defaultConstructed;
 
 } ;
 
