@@ -1,5 +1,3 @@
-add_subdirectory(spa)
-
 set(LMMS_SRCS
 	${LMMS_SRCS}
 	core/AutomatableModel.cpp
@@ -100,7 +98,7 @@ set(LMMS_SRCS
 	core/midi/MidiTime.cpp
 	core/midi/MidiWinMM.cpp
 
-	${SPA_SRCS}
+	core/spa/SpaInstrument.cpp
 
 	PARENT_SCOPE
 )

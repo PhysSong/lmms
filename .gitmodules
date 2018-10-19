@@ -34,3 +34,12 @@
 [submodule "doc/wiki"]
 	path = doc/wiki
 	url = https://github.com/lmms/lmms.wiki.git
+[submodule "plugins/zynaddsubfx-new/mruby-zest-build"]
+	path = plugins/zynaddsubfx-new/mruby-zest-build
+	url = https://github.com/mruby-zest/mruby-zest-build
+[submodule "plugins/zynaddsubfx-new/zynaddsubfx"]
+	path = plugins/zynaddsubfx-new/zynaddsubfx
+	url = https://github.com/PhysSong/zynaddsubfx
+[submodule "src/3rdparty/spa"]
+	path = src/3rdparty/spa
+	url = https://github.com/PhysSong/spa
