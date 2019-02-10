@@ -38,6 +38,8 @@
 #include "lmms_basics.h"
 #include "Song.h"
 #include "ToolTip.h"
+#include "StepRecorder.h"
+#include "StepRecorderWidget.h"
 
 class QPainter;
 class QPixmap;
@@ -92,6 +94,7 @@ public:
 
 	void setCurrentPattern( Pattern* newPattern );
 	void setGhostPattern( Pattern* newPattern );
+	void loadGhostNotes( const QDomElement & de );
 
 	inline void stopRecording()
 	{
@@ -101,6 +104,11 @@ public:
 	inline bool isRecording() const
 	{
 		return m_recording;
+	}
+
+	inline bool isStepRecording() const
+	{
+		return m_stepRecorder.isRecording();
 	}
 
 	const Pattern* currentPattern() const
@@ -188,6 +196,7 @@ protected slots:
 	void play();
 	void record();
 	void recordAccompany();
+	bool toggleStepRecording();
 	void stop();
 
 	void startRecordNote( const Note & n );
@@ -205,9 +214,11 @@ protected slots:
 
 	void updatePosition(const MidiTime & t );
 	void updatePositionAccompany(const MidiTime & t );
+	void updatePositionStepRecording(const MidiTime & t );
 
 	void zoomingChanged();
 	void quantizeChanged();
+	void noteLengthChanged();
 	void quantizeNotes();
 
 	void updateSemiToneMarkerMenu();
@@ -325,7 +336,13 @@ private:
 	static const QVector<double> m_zoomLevels;
 
 	Pattern* m_pattern;
-	Pattern* m_ghostPattern;
+	NoteVector m_ghostNotes;
+
+	inline const NoteVector & ghostNotes() const
+	{
+		return m_ghostNotes;
+	}
+
 	QScrollBar * m_leftRightScroll;
 	QScrollBar * m_topBottomScroll;
 
@@ -398,6 +415,9 @@ private:
 
 	friend class PianoRollWindow;
 
+	StepRecorderWidget m_stepRecorderWidget;
+	StepRecorder m_stepRecorder;
+
 	// qproperty fields
 	QColor m_barLineColor;
 	QColor m_beatLineColor;
@@ -442,6 +462,7 @@ public:
 	void stop();
 	void record();
 	void recordAccompany();
+	void toggleStepRecording();
 	void stopRecording();
 
 	bool isRecording() const;
@@ -466,11 +487,14 @@ signals:
 
 
 private slots:
-	void patternRenamed();
+	void updateAfterPatternChange();
 	void ghostPatternSet( bool state );
 
 private:
+	void patternRenamed();
 	void focusInEvent(QFocusEvent * event);
+	void stopStepRecording();
+	void updateStepRecordingIcon();
 
 	PianoRoll* m_editor;
 
