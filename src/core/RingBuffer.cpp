@@ -143,7 +143,7 @@ void RingBuffer::pop( sampleFrame * dst )
 
 void RingBuffer::read( sampleFrame * dst, f_cnt_t offset )
 {
-	f_cnt_t pos = ( m_position + offset ) % m_size;
+	f_cnt_t pos = ( (int)m_position + offset ) % (int)m_size;
 	if( pos < 0 ) { pos += m_size; }
 	
 	if( pos + m_fpp <= m_size ) // we won't go over the edge so we can just memcpy here
@@ -170,8 +170,8 @@ void RingBuffer::read( sampleFrame * dst, float offset )
 
 void RingBuffer::read( sampleFrame * dst, f_cnt_t offset, f_cnt_t length )
 {
-	f_cnt_t pos = ( m_position + offset ) % m_size;
-	if( pos < 0 ) { pos += m_size; }
+	f_cnt_t pos = ( (int)m_position + (int)offset ) % (int)m_size;
+	if( pos < 0 ) { pos += (int)m_size; }
 	
 	if( pos + length <= m_size ) // we won't go over the edge so we can just memcpy here
 	{
