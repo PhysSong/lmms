@@ -76,6 +76,7 @@ install_name_tool -change @rpath/libcarlabase.dylib \
   "$APP/Contents/lib/lmms/libcarlarack.so"
 
 # Link lmms binary
+_executables="${_executables} -executable=$APP/Contents/$lmmsbin"
 _executables="${_executables} -executable=$APP/Contents/$zynbin"
 _executables="${_executables} -executable=$APP/Contents/$zynfmk"
  

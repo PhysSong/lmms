@@ -9,9 +9,9 @@ fi
 
 cmake -DCMAKE_INSTALL_PREFIX=../target/ $CMAKE_FLAGS -DUSE_WERROR=OFF ..
 
-make -j4
-make tests
-./tests/tests
-
-make install
+make -j4 install
 make dmg
+PACKAGE="$(ls lmms-*.dmg)"
+
+echo "Uploading $PACKAGE to transfer.sh..."
+curl --upload-file "$PACKAGE" "https://transfer.sh/$PACKAGE" || true

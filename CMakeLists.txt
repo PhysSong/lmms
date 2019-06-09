@@ -41,7 +41,6 @@ IF(VERSION_BUILD)
 ENDIF()
 
 # Override version information for non-base builds
-INCLUDE(VersionInfo)
 INCLUDE(DetectMachine)
 
 
