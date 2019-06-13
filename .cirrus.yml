@@ -3,9 +3,18 @@ FreeBSD_task:
     image: freebsd-12-0-release-amd64
   env:
     ASSUME_ALWAYS_YES: TRUE # required for unattended "pkg" invocation
-  script:
+  install_script:
+    - pkg install git cmake pkgconf ccache
+      fftw3 fftw3-float libsndfile qt5 qt5-x11extras
+      pulseaudio portaudio jackit sdl2
+      fluidsynth stk libgig Carla
+  prepare_script:
     - git submodule update --init --recursive
-    - pkg install cmake fftw3 fftw3-float qt-creator qt5-x11extras pulseaudio sdl20_mixer
-    - cmake -DWANT_QT5=ON
-    - make -j 2
-
+  build_script:
+    - mkdir build && cd build
+    - cmake .. -DWANT_QT5=ON -DUSE_CCACHE=ON -DCMAKE_PREFIX_PATH=/usr/local
+    - make -j4
+  pkg_cache:
+    folder: /var/cache/pkg
+  ccache_cache:
+    folder: $HOME/.ccache
