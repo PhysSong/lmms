@@ -25,6 +25,10 @@ matrix:
               depth: false
         - os: osx
           osx_image: xcode8.3
+branches:
+  except:
+    # Do not build 'continuous' tags
+    - /^(?i:continuous)$/
 before_install:
     # appdmg doesn't work with old Node.js
     - if [ "$TRAVIS_OS_NAME" = osx ]; then nvm install 10; fi
