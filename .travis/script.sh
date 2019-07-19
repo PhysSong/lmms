@@ -41,6 +41,11 @@ else
 		PACKAGE="$(ls lmms-*.AppImage)"
 	fi
 
-	echo "Uploading $PACKAGE to transfer.sh..."
-	curl --upload-file "$PACKAGE" "https://transfer.sh/$PACKAGE" || true
+	if ! (wget https://github.com/probonopd/uploadtool/raw/master/upload.sh && chmod a+x upload.sh && ./upload.sh "$PACKAGE"); then
+		echo "Failed to upload $PACKAGE to the continuous release. Falling back to transfer.sh..."
+		curl --upload-file "$PACKAGE" "https://transfer.sh/$PACKAGE" || true
+	else
+		echo "Uploading $PACKAGE to transfer.sh..."
+		curl --upload-file "$PACKAGE" "https://transfer.sh/$PACKAGE" || true
+	fi
 fi
