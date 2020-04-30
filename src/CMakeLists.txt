@@ -1,5 +1,3 @@
-ADD_SUBDIRECTORY(3rdparty)
-
 CONFIGURE_FILE("lmmsconfig.h.in"        "${CMAKE_BINARY_DIR}/lmmsconfig.h")
 CONFIGURE_FILE("lmmsversion.h.in"       "${CMAKE_BINARY_DIR}/lmmsversion.h")
 

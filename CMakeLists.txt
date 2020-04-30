@@ -472,6 +472,16 @@ ENDIF(LMMS_BUILD_WIN32)
 # check for libsamplerate
 PKG_CHECK_MODULES(SAMPLERATE REQUIRED samplerate>=0.1.8)
 
+# enable PIC
+# FIXME: use CMAKE_POSITION_INDEPENDENT_CODE instead
+IF(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang" AND NOT WIN32)
+	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -DPIC")
+ENDIF()
+
+# add 3rd-party library before adding LMMS-specific build flags
+# FIXME: move the directory to top-level
+add_subdirectory(src/3rdparty)
+
 # set compiler flags
 SET(WERROR_FLAGS "-Wall -Werror=unused-function -Wno-sign-compare -Wno-strict-overflow")
 OPTION(USE_WERROR "Add -werror to the build flags. Stops the build on warnings" OFF)
@@ -496,6 +506,11 @@ SET(CMAKE_C_FLAGS "${WERROR_FLAGS} ${CMAKE_C_FLAGS}")
 SET(CMAKE_CXX_FLAGS "-fno-exceptions ${WERROR_FLAGS} ${CMAKE_CXX_FLAGS}")
 SET(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -DLMMS_DEBUG")
 SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DLMMS_DEBUG")
+
+# disable warnings from unknown __attribute__
+IF(WIN32 AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-attributes")
+ENDIF()
 
 
 # people simply updating git will still have this and mess up build with it
@@ -533,12 +548,6 @@ ENDIF(WIN32 OR WIN64)
 
 # we somehow have to make LMMS-binary depend on MOC-files
 ADD_FILE_DEPENDENCIES("${CMAKE_BINARY_DIR}/lmmsconfig.h")
-
-IF(WIN32)
-	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-attributes")
-ELSE(WIN32)
-	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -DPIC")
-ENDIF(WIN32)
 
 # use ccache
 OPTION(USE_CCACHE "Use ccache for compilation" OFF)
