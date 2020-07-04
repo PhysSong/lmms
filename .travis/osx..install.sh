@@ -2,11 +2,13 @@
 
 PACKAGES="cmake pkgconfig fftw libogg libvorbis lame libsndfile libsamplerate jack sdl libgig libsoundio stk fluid-synth portaudio node fltk carla"
 
+brew install $PACKAGES ccache
+
 if [ $QT5 ]; then
-	PACKAGES="$PACKAGES qt5"
+	# Try Qt 5.13.2 instead of the latest
+	brew reinstall "https://raw.githubusercontent.com/Homebrew/homebrew-core/65a45a9e61f15046a256cdba6a008f38f79570c9/Formula/qt.rb"
 fi
 
-brew install $PACKAGES ccache
 
 if [ -z "$QT5" ]; then
 	brew tap cartr/qt4

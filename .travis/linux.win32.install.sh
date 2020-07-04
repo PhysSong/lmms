@@ -18,7 +18,7 @@ export MINGW_PACKAGES
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 . $DIR/linux.win.download.sh win32
 
-PACKAGES="nsis cloog-isl libmpc3 qt4-linguist-tools mingw32 $MINGW_PACKAGES"
+PACKAGES="p7zip-full nsis cloog-isl libmpc3 qt4-linguist-tools mingw32 $MINGW_PACKAGES"
 
 sudo apt-get install -y $PACKAGES
 
@@ -28,4 +28,14 @@ pushd /tmp
 wget http://archive.ubuntu.com/ubuntu/pool/main/c/ccache/ccache_3.2.4-1_amd64.deb
 sha256sum -c $TRAVIS_BUILD_DIR/.travis/ccache.sha256
 sudo dpkg -i ccache_3.2.4-1_amd64.deb
+popd
+
+# Manually add Qt translations
+pushd /tmp
+wget http://download.qt.io/online/qtsdkrepository/windows_x86/desktop/qt5_54/qt.54.win32_mingw491/5.4.2-0qt5_addons.7z
+7z x 5.4.2-0qt5_addons.7z
+sudo mkdir -p /opt/mingw32/share/qt5/translations
+sudo mkdir -p /opt/mingw64/share/qt5/translations
+sudo cp 5.4/mingw491_32/translations/* /opt/mingw32/share/qt5/translations
+sudo cp 5.4/mingw491_32/translations/* /opt/mingw64/share/qt5/translations
 popd

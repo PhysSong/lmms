@@ -11,7 +11,7 @@ VST_PACKAGES="wine-dev libqt5x11extras5-dev qtbase5-private-dev libxcb-util0-dev
 PACKAGES="$PACKAGES $VST_PACKAGES libjack-jackd2-0"
 
 if [ $QT5 ]; then
-	PACKAGES="$PACKAGES qttools5-dev-tools"
+	PACKAGES="$PACKAGES qt59base qt59translations qt59tools"
 else
 	PACKAGES="$PACKAGES libqt4-dev"
 fi
