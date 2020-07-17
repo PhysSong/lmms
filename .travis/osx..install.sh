@@ -5,8 +5,7 @@ PACKAGES="cmake pkgconfig fftw libogg libvorbis lame libsndfile libsamplerate ja
 brew install $PACKAGES ccache
 
 if [ $QT5 ]; then
-	# Try Qt 5.13.2 instead of the latest
-	brew reinstall "https://raw.githubusercontent.com/Homebrew/homebrew-core/65a45a9e61f15046a256cdba6a008f38f79570c9/Formula/qt.rb"
+	brew install qt
 fi
 
 

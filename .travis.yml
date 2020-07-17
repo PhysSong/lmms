@@ -15,7 +15,7 @@ matrix:
           dist: trusty
         - env: QT5=True
         - os: osx
-          osx_image: xcode9.4
+          osx_image: xcode10
           env: QT5=True
 before_install:
    - . ${TRAVIS_BUILD_DIR}/.travis/${TRAVIS_OS_NAME}.${TARGET_OS}.before_install.sh
