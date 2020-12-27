@@ -220,6 +220,10 @@ sample_rate_t SampleBuffer::mixerSampleRate()
 
 void SampleBuffer::update(bool keepSettings)
 {
+	// TODO: split this to three functions
+	// - reset start/end/loop frames
+	// - load samples
+	// - normalize sample rate from m_origData
 	const bool lock = (m_data.size() != 0);
 	if (lock)
 	{
