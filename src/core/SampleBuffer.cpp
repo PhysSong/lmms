@@ -237,7 +237,7 @@ void SampleBuffer::update(bool keepSettings)
 		// TODO: reverse- and amplification-property is not covered
 		// by following code...
 		auto previousFrames = frames();
-		m_data = std::move(m_origData);
+		m_data = m_origData;
 		if (keepSettings == false)
 		{
 			m_loopStartFrame = m_startFrame = 0;
