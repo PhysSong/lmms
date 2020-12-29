@@ -44,8 +44,8 @@ public:
     explicit TimeInputDialog(QWidget *parent = 0);
     ~TimeInputDialog();
     void setTimeModel(int time_mode);
-    void setMilliSeconds(qint64 milliseconds);
-    qint64 getTicks();  // User input
+    void setMilliSeconds(int64_t milliseconds);
+    int64_t getTicks();  // User input
 
 private:
     enum DisplayModes {
@@ -56,12 +56,12 @@ private:
     typedef DisplayModes DisplayMode;
 
     Ui::TimeInputDialog *ui;
-    qint64 millisecsToTicks(qint64 milliseconds, qint32 tempo);
-    qint64 totalTicks(qint32 bars, qint32 beats, qint32 ticks);
-    qint64 totalMilliseconds(qint32 mins, qint32 secs, qint32 milli);
-    qint32 m_timemode;
-    qint64 m_milliseconds;
-    typedef QPair<qint32, qint32> range;
+    int64_t millisecsToTicks(int64_t milliseconds, int tempo);
+    int64_t totalTicks(int bars, int beats, int ticks);
+    int64_t totalMilliseconds(int mins, int secs, int milli);
+    int m_timemode;
+    int64_t m_milliseconds;
+    typedef QPair<int, int> range;
     Song* s;
     void setSpinRange(range Major, range Minor, range Milli);
 };

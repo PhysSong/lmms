@@ -108,8 +108,8 @@ void TimeDisplayWidget::updateTime()
 			break;
 
 		case BarsTicks:
-			qint64 tick;
-			tick = ( static_cast<qint64>( s->getMilliseconds() ) * s->getTempo() * ( DefaultTicksPerTact / 4 ) ) / 60000 ;
+			int64_t tick;
+			tick = ( static_cast<int64_t>( s->getMilliseconds() ) * s->getTempo() * ( DefaultTicksPerTact / 4 ) ) / 60000 ;
 			m_majorLCD.setValue( ( tick / s->ticksPerTact() ) + 1 );
 			m_minorLCD.setValue( ( tick % s->ticksPerTact() ) /
 						 ( s->ticksPerTact() / s->getTimeSigModel().getNumerator() ) +1 );
@@ -163,8 +163,8 @@ void TimeDisplayWidget::contextMenuEvent( QContextMenuEvent *event )
 
 void TimeDisplayWidget::wheelEvent( QWheelEvent *event )
 {
-	qint64 tick = ( static_cast<qint64>( s->getMilliseconds() ) * s->getTempo() * ( DefaultTicksPerTact / 4 ) ) / 60000 ;
-	qint64 playPos = tick + event->delta();
+	int64_t tick = ( static_cast<int64_t>( s->getMilliseconds() ) * s->getTempo() * ( DefaultTicksPerTact / 4 ) ) / 60000 ;
+	int64_t playPos = tick + event->delta();
 	playPos = playPos > 0 ? playPos : 1;
 
 	if ( s->isPlaying() )

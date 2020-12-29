@@ -278,7 +278,7 @@ public slots:
 
 	void addBBTrack();
 
-	void setPlayPos( qint64 ticks, PlayModes playMode );
+	void setPlayPos( int64_t ticks, PlayModes playMode );
 
 
 private slots:
