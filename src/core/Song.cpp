@@ -574,7 +574,8 @@ void Song::setPlayPos( int64_t ticks, PlayModes playMode )
 {
 	tick_t ticksFromPlayMode = m_playPos[playMode].getTicks();
 	m_elapsedTicks += ticksFromPlayMode - ticks;
-	m_elapsedMilliSeconds[playMode] += TimePos::ticksToMilliseconds( ticks - ticksFromPlayMode, getTempo() );
+	m_elapsedMilliSeconds[playMode] += TimePos::ticksToMilliseconds(
+					static_cast<double>(ticks - ticksFromPlayMode), getTempo());
 	m_playPos[playMode].setTicks( ticks );
 	m_playPos[playMode].setCurrentFrame( 0.0f );
 	m_playPos[playMode].setJumped( true );

@@ -41,14 +41,15 @@ class TimeInputDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit TimeInputDialog(QWidget *parent = 0);
+    explicit TimeInputDialog(QWidget *parent = nullptr);
     ~TimeInputDialog();
     void setTimeModel(int time_mode);
     void setMilliSeconds(int64_t milliseconds);
     int64_t getTicks();  // User input
 
 private:
-    enum DisplayModes {
+    enum DisplayModes
+    {
         MinutesSeconds,
         BarsTicks,
         DisplayModeCount
@@ -62,7 +63,6 @@ private:
     int m_timemode;
     int64_t m_milliseconds;
     typedef QPair<int, int> range;
-    Song* s;
     void setSpinRange(range Major, range Minor, range Milli);
 };
 

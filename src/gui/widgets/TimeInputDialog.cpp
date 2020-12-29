@@ -24,12 +24,11 @@
 #include "TimeDisplayWidget.h"
 #include "TimeInputDialog.h"
 
-TimeInputDialog::TimeInputDialog( QWidget *parent ) :
-	QDialog( parent ),
-	ui( new Ui::TimeInputDialog )
+TimeInputDialog::TimeInputDialog(QWidget *parent) :
+	QDialog(parent),
+	ui(new Ui::TimeInputDialog)
 {
-	s = Engine::getSong();
-	ui->setupUi( this );
+	ui->setupUi(this);
 }
 
 TimeInputDialog::~TimeInputDialog()
@@ -37,22 +36,25 @@ TimeInputDialog::~TimeInputDialog()
 	delete ui;
 }
 
-void TimeInputDialog::setTimeModel( int time_mode )
+void TimeInputDialog::setTimeModel(int time_mode)
 {
 	m_timemode = time_mode;
-	switch ( m_timemode ) {
+	switch (m_timemode)
+	{
 	case MinutesSeconds:
-		ui->majorLabel->setText( TimeDisplayWidget::tr( "MIN" ) );
-		ui->minorLabel->setText( TimeDisplayWidget::tr( "SEC" ) );
-		ui->milliLabel->setText( TimeDisplayWidget::tr( "MSEC" ) );
-		setSpinRange( range( 0, 9999 ), range( 0, 59 ), range( 0, 999 ) );
+		ui->majorLabel->setText(TimeDisplayWidget::tr("MIN"));
+		ui->minorLabel->setText(TimeDisplayWidget::tr("SEC"));
+		ui->milliLabel->setText(TimeDisplayWidget::tr("MSEC"));
+		setSpinRange(range(0, 9999), range(0, 59), range(0, 999));
 		break;
 
 	case BarsTicks:
-		ui->majorLabel->setText( TimeDisplayWidget::tr( "BAR" ) );
-		ui->minorLabel->setText( TimeDisplayWidget::tr( "BEAT" ) );
-		ui->milliLabel->setText( TimeDisplayWidget::tr( "TICK" ) );
-		setSpinRange( range( 1, 9999 ), range( 1, s->getTimeSigModel().getNumerator() ), range( 0, s->ticksPerTact() / s->getTimeSigModel().getNumerator() - 1 ) );
+		ui->majorLabel->setText(TimeDisplayWidget::tr("BAR"));
+		ui->minorLabel->setText(TimeDisplayWidget::tr("BEAT"));
+		ui->milliLabel->setText(TimeDisplayWidget::tr("TICK"));
+		setSpinRange(range(1, 9999),
+			range(1, Engine::getSong()->getTimeSigModel().getNumerator()),
+			range(0, Engine::getSong()->ticksPerBar() / Engine::getSong()->getTimeSigModel().getNumerator() - 1));
 		break;
 
 	default:
@@ -61,66 +63,70 @@ void TimeInputDialog::setTimeModel( int time_mode )
 	return;
 }
 
-void TimeInputDialog::setMilliSeconds( int64_t milliseconds )
+void TimeInputDialog::setMilliSeconds(int64_t milliseconds)
 {
-	m_milliseconds = ( ( milliseconds > 0 ) ? milliseconds : 0 );
+	m_milliseconds = ((milliseconds > 0) ? milliseconds : 0);
 	int64_t ticks;
-	switch ( m_timemode ) {
+	switch (m_timemode) {
 	case MinutesSeconds:
-		ui->majorInput->setValue( m_milliseconds / 60000 );
-		ui->minorInput->setValue( ( m_milliseconds / 1000 ) % 60 );
-		ui->milliInput->setValue( m_milliseconds % 1000 );
+		ui->majorInput->setValue(m_milliseconds / 60000);
+		ui->minorInput->setValue((m_milliseconds / 1000) % 60);
+		ui->milliInput->setValue(m_milliseconds % 1000);
 		break;
 	case BarsTicks:
-		ticks = millisecsToTicks( m_milliseconds, s->getTempo() );
-		ui->majorInput->setValue( ticks / s->ticksPerTact() + 1 );
-		ui->minorInput->setValue( ( ticks % s->ticksPerTact() ) /
-					  ( s->ticksPerTact() / s->getTimeSigModel().getNumerator() ) +1 );
-		ui->milliInput->setValue( ( ticks % s->ticksPerTact() ) %
-					  ( s->ticksPerTact() / s->getTimeSigModel().getNumerator() ) );
+		ticks = millisecsToTicks(m_milliseconds, Engine::getSong()->getTempo());
+		ui->majorInput->setValue(ticks / Engine::getSong()->ticksPerBar() + 1);
+		ui->minorInput->setValue((ticks % Engine::getSong()->ticksPerBar()) /
+					(Engine::getSong()->ticksPerBar() / Engine::getSong()->getTimeSigModel().getNumerator()) +1);
+		ui->milliInput->setValue((ticks % Engine::getSong()->ticksPerBar()) %
+					(Engine::getSong()->ticksPerBar() / Engine::getSong()->getTimeSigModel().getNumerator()));
 	default:
 		break;
 	}
 }
 
-int64_t TimeInputDialog::millisecsToTicks( int64_t milliseconds, int tempo )
+int64_t TimeInputDialog::millisecsToTicks(int64_t milliseconds, int tempo)
 {
-	return ( ( milliseconds * tempo * ( DefaultTicksPerTact / 4 ) ) / 60000 );
+	return ((milliseconds * tempo * (DefaultTicksPerBar / 4)) / 60000);
 }
 
-int64_t TimeInputDialog::totalTicks( int bars, int beats, int ticks )
+int64_t TimeInputDialog::totalTicks(int bars, int beats, int ticks)
 {
 	int64_t ticksTotal = 0;
-	ticksTotal += ( bars - 1 ) * s->ticksPerTact();
-	ticksTotal += ( ( beats -1 ) * s->ticksPerTact() ) / s->getTimeSigModel().getNumerator();
+	ticksTotal += (bars - 1) * Engine::getSong()->ticksPerBar();
+	ticksTotal += ((beats -1) * Engine::getSong()->ticksPerBar())
+				/ Engine::getSong()->getTimeSigModel().getNumerator();
 	ticksTotal += ticks;
 	return ticksTotal;
 }
 
-int64_t TimeInputDialog::totalMilliseconds( int mins, int secs, int milli )
+int64_t TimeInputDialog::totalMilliseconds(int mins, int secs, int milli)
 {
-	return ( mins * 60000 + secs * 1000 + milli );
+	return (mins * 60000 + secs * 1000 + milli);
 }
 
-void TimeInputDialog::setSpinRange( range Major, range Minor, range Milli )
+void TimeInputDialog::setSpinRange(range Major, range Minor, range Milli)
 {
-	ui->majorInput->setRange( Major.first, Major.second );
-	ui->minorInput->setRange( Minor.first, Minor.second );
-	ui->milliInput->setRange( Milli.first, Milli.second );
+	ui->majorInput->setRange(Major.first, Major.second);
+	ui->minorInput->setRange(Minor.first, Minor.second);
+	ui->milliInput->setRange(Milli.first, Milli.second);
 }
 
 int64_t TimeInputDialog::getTicks()
 {
 	int64_t ticks = 0;
-	switch ( m_timemode ) {
+	switch (m_timemode)
+	{
 	case MinutesSeconds:
-		ticks = millisecsToTicks( totalMilliseconds( ui->majorInput->value(), ui->minorInput->value(), ui->milliInput->value() ),  s->getTempo() );
-		return ( ticks > 0 ? ticks : 0 );  // Try to prevent from overflow
+		ticks = millisecsToTicks(
+			totalMilliseconds(ui->majorInput->value(), ui->minorInput->value(), ui->milliInput->value()),
+			Engine::getSong()->getTempo());
+		return (ticks > 0 ? ticks : 0);  // Try to prevent from overflow
 		break;
 
 	case BarsTicks:
-		ticks = totalTicks( ui->majorInput->value(), ui->minorInput->value(), ui->milliInput->value() );
-		return ( ticks > 0 ? ticks : 0 );
+		ticks = totalTicks(ui->majorInput->value(), ui->minorInput->value(), ui->milliInput->value());
+		return (ticks > 0 ? ticks : 0);
 
 	default:
 		return 0;
