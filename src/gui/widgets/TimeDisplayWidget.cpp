@@ -154,7 +154,7 @@ void TimeDisplayWidget::contextMenuEvent( QContextMenuEvent *event )
 
 void TimeDisplayWidget::wheelEvent( QWheelEvent *event )
 {
-	int64_t playPos = s->getPlayPos().getTicks() + event->delta();
+	int64_t playPos = s->getPlayPos().getTicks() + event->angleDelta().y();
 	playPos = playPos > 0 ? playPos : 1;
 
 	if ( s->isPlaying() )
