@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2014 Tobias Doerffel <tobydox/at/users.sourceforge.net>
  *
- * This file is part of LMMS - http://lmms.io
+ * This file is part of LMMS - https://lmms.io
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public
@@ -61,17 +61,6 @@ TimeDisplayWidget::TimeDisplayWidget() :
 					this, SLOT( updateTime() ) );
 }
 
-
-
-
-TimeDisplayWidget::~TimeDisplayWidget()
-{
-}
-
-
-
-
-
 void TimeDisplayWidget::setDisplayMode( DisplayMode displayMode )
 {
 	m_displayMode = displayMode;
@@ -102,19 +91,21 @@ void TimeDisplayWidget::updateTime()
 	switch( m_displayMode )
 	{
 		case MinutesSeconds:
-			m_majorLCD.setValue( s->getMilliseconds() / 60000 );
-			m_minorLCD.setValue( ( s->getMilliseconds() / 1000 ) % 60 );
-			m_milliSecondsLCD.setValue( s->getMilliseconds() % 1000 );
+			int msec;
+			msec = s->getMilliseconds();
+			m_majorLCD.setValue(msec / 60000);
+			m_minorLCD.setValue((msec / 1000) % 60);
+			m_milliSecondsLCD.setValue(msec % 1000);
 			break;
 
 		case BarsTicks:
-			int64_t tick;
-			tick = ( static_cast<int64_t>( s->getMilliseconds() ) * s->getTempo() * ( DefaultTicksPerTact / 4 ) ) / 60000 ;
-			m_majorLCD.setValue( ( tick / s->ticksPerTact() ) + 1 );
-			m_minorLCD.setValue( ( tick % s->ticksPerTact() ) /
-						 ( s->ticksPerTact() / s->getTimeSigModel().getNumerator() ) +1 );
-			m_milliSecondsLCD.setValue( ( tick % s->ticksPerTact() ) %
-							( s->ticksPerTact() / s->getTimeSigModel().getNumerator() ) );
+			int tick;
+			tick = s->getPlayPos().getTicks();
+			m_majorLCD.setValue((tick / s->ticksPerBar()) + 1);
+			m_minorLCD.setValue((tick % s->ticksPerBar()) /
+						 (s->ticksPerBar() / s->getTimeSigModel().getNumerator() ) +1);
+			m_milliSecondsLCD.setValue((tick % s->ticksPerBar()) %
+							(s->ticksPerBar() / s->getTimeSigModel().getNumerator()));
 			break;
 
 		default: break;
@@ -163,8 +154,7 @@ void TimeDisplayWidget::contextMenuEvent( QContextMenuEvent *event )
 
 void TimeDisplayWidget::wheelEvent( QWheelEvent *event )
 {
-	int64_t tick = ( static_cast<int64_t>( s->getMilliseconds() ) * s->getTempo() * ( DefaultTicksPerTact / 4 ) ) / 60000 ;
-	int64_t playPos = tick + event->delta();
+	int64_t playPos = s->getPlayPos().getTicks() + event->delta();
 	playPos = playPos > 0 ? playPos : 1;
 
 	if ( s->isPlaying() )

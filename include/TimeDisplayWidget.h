@@ -4,7 +4,7 @@
  * Copyright (c) 2014 Ruben Ibarra
  * Copyright (c) 2014 Tobias Doerffel <tobydox/at/users.sourceforge.net>
  *
- * This file is part of LMMS - http://lmms.io
+ * This file is part of LMMS - https://lmms.io
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public
@@ -38,13 +38,13 @@ class TimeDisplayWidget : public QWidget
 	Q_OBJECT
 public:
 	TimeDisplayWidget();
-	virtual ~TimeDisplayWidget();
-
+	virtual ~TimeDisplayWidget() = default;
 
 protected:
-	virtual void mousePressEvent( QMouseEvent* mouseEvent );
-	virtual void contextMenuEvent( QContextMenuEvent *event );
-	virtual void wheelEvent( QWheelEvent *event );
+	void mousePressEvent( QMouseEvent* mouseEvent ) override;
+	void contextMenuEvent( QContextMenuEvent *event ) override;
+	void wheelEvent( QWheelEvent *event ) override;
+
 
 private slots:
 	void updateTime();
