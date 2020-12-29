@@ -58,13 +58,18 @@ TimeDisplayWidget::TimeDisplayWidget() :
 	setDisplayMode( m_displayMode );
 
 	connect( gui->mainWindow(), SIGNAL( periodicUpdate() ),
-		 this, SLOT( updateTime() ) );
+					this, SLOT( updateTime() ) );
 }
+
+
 
 
 TimeDisplayWidget::~TimeDisplayWidget()
 {
 }
+
+
+
 
 
 void TimeDisplayWidget::setDisplayMode( DisplayMode displayMode )
@@ -85,10 +90,11 @@ void TimeDisplayWidget::setDisplayMode( DisplayMode displayMode )
 			m_milliSecondsLCD.setLabel( tr( "TICK" ) );
 			break;
 
-		default:
-			break;
+		default: break;
 	}
 }
+
+
 
 
 void TimeDisplayWidget::updateTime()
@@ -106,15 +112,16 @@ void TimeDisplayWidget::updateTime()
 			tick = ( static_cast<qint64>( s->getMilliseconds() ) * s->getTempo() * ( DefaultTicksPerTact / 4 ) ) / 60000 ;
 			m_majorLCD.setValue( ( tick / s->ticksPerTact() ) + 1 );
 			m_minorLCD.setValue( ( tick % s->ticksPerTact() ) /
-					     ( s->ticksPerTact() / s->getTimeSigModel().getNumerator() ) +1 );
+						 ( s->ticksPerTact() / s->getTimeSigModel().getNumerator() ) +1 );
 			m_milliSecondsLCD.setValue( ( tick % s->ticksPerTact() ) %
-						    ( s->ticksPerTact() / s->getTimeSigModel().getNumerator() ) );
+							( s->ticksPerTact() / s->getTimeSigModel().getNumerator() ) );
 			break;
 
-		default:
-			break;
+		default: break;
 	}
 }
+
+
 
 
 void TimeDisplayWidget::mousePressEvent( QMouseEvent* mouseEvent )
