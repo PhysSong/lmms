@@ -68,7 +68,6 @@ private:
 	LcdWidget m_minorLCD;
 	LcdWidget m_milliSecondsLCD;
 	TimeInputDialog* m_timeinputbox;
-	Song* s;
 
 } ;
 

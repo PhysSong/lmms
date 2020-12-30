@@ -52,7 +52,6 @@ TimeDisplayWidget::TimeDisplayWidget() :
 	setMaximumHeight( 32 );
 
 	ToolTip::add( this, tr( "left click to change time units, \nright click to jump to specified time" ) );
-	s = Engine::getSong();
 
 	// update labels of LCD spinboxes
 	setDisplayMode( m_displayMode );
@@ -88,6 +87,8 @@ void TimeDisplayWidget::setDisplayMode( DisplayMode displayMode )
 
 void TimeDisplayWidget::updateTime()
 {
+	Song* s = Engine::getSong();
+
 	switch( m_displayMode )
 	{
 		case MinutesSeconds:
@@ -143,7 +144,7 @@ void TimeDisplayWidget::contextMenuEvent(QContextMenuEvent *event)
 	{
 		m_timeinputbox = new TimeInputDialog(this);
 		m_timeinputbox->setTimeModel(this->m_displayMode);
-		m_timeinputbox->setMilliSeconds(s->getMilliseconds());
+		m_timeinputbox->setMilliSeconds(Engine::getSong()->getMilliseconds());
 		m_timeinputbox->show();
 		connect(m_timeinputbox, SIGNAL(accepted()), this, SLOT(timeJump()));
 	}
@@ -154,6 +155,8 @@ void TimeDisplayWidget::contextMenuEvent(QContextMenuEvent *event)
 
 void TimeDisplayWidget::wheelEvent(QWheelEvent *event)
 {
+	Song* s = Engine::getSong();
+
 	tick_t playPos = s->getPlayPos().getTicks() + event->angleDelta().y();
 	playPos = playPos > 0 ? playPos : 1;
 
@@ -172,6 +175,8 @@ void TimeDisplayWidget::wheelEvent(QWheelEvent *event)
 
 void TimeDisplayWidget::timeJump()
 {
+	Song* s = Engine::getSong();
+
 	if (s->isPlaying())
 	{
 		s->setToTime(m_timeinputbox->getTicks());
