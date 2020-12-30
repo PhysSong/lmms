@@ -217,6 +217,8 @@ MainWindow::MainWindow() :
 }
 
 
+
+
 MainWindow::~MainWindow()
 {
 	for( PluginView *view : m_tools )
@@ -568,7 +570,7 @@ void MainWindow::finalize()
 	m_toolBarLayout->addWidget( fx_mixer_window, 1, 5 );
 	m_toolBarLayout->addWidget( project_notes_window, 1, 6 );
 	m_toolBarLayout->addWidget( controllers_window, 1, 7 );
-    m_toolBarLayout->addWidget( m_countDownClock, 1, 8 );
+	m_toolBarLayout->addWidget( m_countDownClock, 1, 8 );
 	m_toolBarLayout->setColumnStretch( 100, 1 );
 
 	// setup-dialog opened before?
@@ -1329,7 +1331,7 @@ void MainWindow::decrementRecordCountDown()
 
 void MainWindow::toggleControllerRack()
 {
-    toggleWindow( gui->getControllerRackView() );
+	toggleWindow( gui->getControllerRackView() );
 }
 
 void MainWindow::updateCountDownDuration()
