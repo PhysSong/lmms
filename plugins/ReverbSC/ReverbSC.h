@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2017 Paul Batchelor
  *
- * This file is part of LMMS - http://lmms.io
+ * This file is part of LMMS - https://lmms.io
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public
@@ -48,12 +48,14 @@ public:
 		return &m_reverbSCControls;
 	}
 
+	void changeSampleRate();
 
 private:
 	ReverbSCControls m_reverbSCControls;
 	sp_data *sp;
 	sp_revsc *revsc;
 	sp_dcblock *dcblk[2];
+	QMutex mutex;
 	friend class ReverbSCControls;
 } ;
 

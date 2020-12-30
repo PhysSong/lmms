@@ -102,7 +102,7 @@ ControllerRackView::~ControllerRackView()
 void ControllerRackView::saveSettings( QDomDocument & _doc,
 							QDomElement & _this )
 {
-	MainWindow::saveWidgetState( this, _this, QSize( 400, 300) );
+	MainWindow::saveWidgetState( this, _this );
 }
 
 
@@ -176,7 +176,7 @@ void ControllerRackView::onControllerRemoved( Controller * removedController )
 
 	if (viewOfRemovedController )
 	{
-		m_controllerViews.erase( qFind( m_controllerViews.begin(),
+		m_controllerViews.erase( std::find( m_controllerViews.begin(),
 					m_controllerViews.end(), viewOfRemovedController ) );
 
 		delete viewOfRemovedController;

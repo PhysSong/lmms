@@ -28,6 +28,7 @@
 #include <QApplication>
 #include <QFrame>
 #include <QPainter>
+#include <QPainterPath>
 #include <QStyleFactory>
 #include <QStyleOption>
 
@@ -132,11 +133,7 @@ LmmsStyle::LmmsStyle() :
 
 	if( s_palette != NULL ) { qApp->setPalette( *s_palette ); }
 
-#if QT_VERSION >= 0x050000
 	setBaseStyle( QStyleFactory::create( "Fusion" ) );
-#else
-	setBaseStyle( QStyleFactory::create( "Plastique" ) );
-#endif
 }
 
 
@@ -176,6 +173,13 @@ void LmmsStyle::drawComplexControl( ComplexControl control,
 							painter, widget );
 			return;
 		}
+	}
+	else if (control == CC_MdiControls)
+	{
+		QStyleOptionComplex so(*option);
+		so.palette.setColor(QPalette::Button, QColor(223, 228, 236));
+		QProxyStyle::drawComplexControl(control, &so, painter, widget);
+		return;
 	}
 /*	else if( control == CC_ScrollBar )
 	{
@@ -365,4 +369,3 @@ void LmmsStyle::hoverColors( bool sunken, bool hover, bool active, QColor& color
 		blend = QColor( 33, 33, 33 );
 	}
 }
-

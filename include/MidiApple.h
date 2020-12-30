@@ -47,7 +47,7 @@ public:
 
 	inline static QString probeDevice()
 	{
-		return QString::Null(); // no midi device name
+		return QString(); // no midi device name
 	}
 
 	inline static QString name()
@@ -56,11 +56,11 @@ public:
 	}
 	inline static QString configSection()
 	{
-		return QString::Null(); // no configuration settings
+		return QString(); // no configuration settings
 	}
 	
 	virtual void processOutEvent( const MidiEvent & _me,
-								const MidiTime & _time,
+								const TimePos & _time,
 								const MidiPort * _port );
 	
 	virtual void applyPortMode( MidiPort * _port );

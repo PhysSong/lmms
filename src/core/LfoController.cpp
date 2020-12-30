@@ -49,12 +49,12 @@ LfoController::LfoController( Model * _parent ) :
 {
 	setSampleExact( true );
 	connect( &m_waveModel, SIGNAL( dataChanged() ),
-			this, SLOT( updateSampleFunction() ) );
+			this, SLOT( updateSampleFunction() ), Qt::DirectConnection );
 
 	connect( &m_speedModel, SIGNAL( dataChanged() ),
-			this, SLOT( updateDuration() ) );
+			this, SLOT( updateDuration() ), Qt::DirectConnection );
 	connect( &m_multiplierModel, SIGNAL( dataChanged() ),
-			this, SLOT( updateDuration() ) );
+			this, SLOT( updateDuration() ), Qt::DirectConnection );
 	connect( Engine::mixer(), SIGNAL( sampleRateChanged() ),
 			this, SLOT( updateDuration() ) );
 
@@ -113,6 +113,7 @@ void LfoController::updateValueBuffer()
 	}
 
 	m_currentPhase = absFraction( phase - m_phaseOffset );
+	m_bufferLastUpdated = s_periods;
 }
 
 void LfoController::updatePhase()

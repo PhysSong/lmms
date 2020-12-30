@@ -1,7 +1,7 @@
 /*
  * ReverbSC.cpp - A native reverb based on an algorithm by Sean Costello
  *
- * This file is part of LMMS - http://lmms.io
+ * This file is part of LMMS - https://lmms.io
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public
@@ -24,6 +24,7 @@
 #include "ReverbSC.h"
 
 #include "embed.h"
+#include "plugin_export.h"
 
 #define DB2LIN(X) pow(10, X / 20.0f);
 
@@ -34,7 +35,7 @@ Plugin::Descriptor PLUGIN_EXPORT reverbsc_plugin_descriptor =
 {
 	STRINGIFY( PLUGIN_NAME ),
 	"ReverbSC",
-	QT_TRANSLATE_NOOP( "pluginBrowser", "Reverb algorithm by Sean Costello" ),
+	QT_TRANSLATE_NOOP( "PluginBrowser", "Reverb algorithm by Sean Costello" ),
 	"Paul Batchelor",
 	0x0123,
 	Plugin::Effect,
@@ -58,8 +59,8 @@ ReverbSCEffect::ReverbSCEffect( Model* parent, const Descriptor::SubPluginFeatur
 	sp_dcblock_create(&dcblk[0]);
 	sp_dcblock_create(&dcblk[1]);
 	
-	sp_dcblock_init(sp, dcblk[0]);
-	sp_dcblock_init(sp, dcblk[1]);
+	sp_dcblock_init(sp, dcblk[0], Engine::mixer()->currentQualitySettings().sampleRateMultiplier() );
+	sp_dcblock_init(sp, dcblk[1], Engine::mixer()->currentQualitySettings().sampleRateMultiplier() );
 }
 
 ReverbSCEffect::~ReverbSCEffect()
@@ -125,12 +126,33 @@ bool ReverbSCEffect::processAudioBuffer( sampleFrame* buf, const fpp_t frames )
 
 	return isRunning();
 }
+	
+void ReverbSCEffect::changeSampleRate()
+{
+	// Change sr variable in Soundpipe. does not need to be destroyed
+	sp->sr = Engine::mixer()->processingSampleRate();
+
+	mutex.lock();
+	sp_revsc_destroy(&revsc);
+	sp_dcblock_destroy(&dcblk[0]);
+	sp_dcblock_destroy(&dcblk[1]);
+
+	sp_revsc_create(&revsc);
+	sp_revsc_init(sp, revsc);
+
+	sp_dcblock_create(&dcblk[0]);
+	sp_dcblock_create(&dcblk[1]);
+	
+	sp_dcblock_init(sp, dcblk[0], Engine::mixer()->currentQualitySettings().sampleRateMultiplier() );
+	sp_dcblock_init(sp, dcblk[1], Engine::mixer()->currentQualitySettings().sampleRateMultiplier() );
+	mutex.unlock();
+}
 
 extern "C"
 {
 
 // necessary for getting instance out of shared lib
-Plugin * PLUGIN_EXPORT lmms_plugin_main( Model* parent, void* data )
+PLUGIN_EXPORT Plugin * lmms_plugin_main( Model* parent, void* data )
 {
 	return new ReverbSCEffect( 
 		parent, 

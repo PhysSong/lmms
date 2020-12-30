@@ -34,7 +34,7 @@
 
 #include "lmms_basics.h"
 #include "JournallingObject.h"
-#include "MidiTime.h"
+#include "TimePos.h"
 #include "AutomationPattern.h"
 #include "ComboBoxModel.h"
 #include "Knob.h"
@@ -70,12 +70,12 @@ public:
 
 	inline bool validPattern() const
 	{
-		return m_pattern != nullptr;
+		return m_pattern != nullptr && m_pattern->hasAutomation();
 	}
 
-	virtual void saveSettings(QDomDocument & doc, QDomElement & parent);
-	virtual void loadSettings(const QDomElement & parent);
-	QString nodeName() const
+	void saveSettings(QDomDocument & doc, QDomElement & parent) override;
+	void loadSettings(const QDomElement & parent) override;
+	QString nodeName() const override
 	{
 		return "automationeditor";
 	}
@@ -114,14 +114,14 @@ public slots:
 protected:
 	typedef AutomationPattern::timeMap timeMap;
 
-	virtual void keyPressEvent(QKeyEvent * ke);
-	virtual void leaveEvent(QEvent * e);
-	virtual void mousePressEvent(QMouseEvent * mouseEvent);
-	virtual void mouseReleaseEvent(QMouseEvent * mouseEvent);
-	virtual void mouseMoveEvent(QMouseEvent * mouseEvent);
-	virtual void paintEvent(QPaintEvent * pe);
-	virtual void resizeEvent(QResizeEvent * re);
-	virtual void wheelEvent(QWheelEvent * we);
+	void keyPressEvent(QKeyEvent * ke) override;
+	void leaveEvent(QEvent * e) override;
+	void mousePressEvent(QMouseEvent * mouseEvent) override;
+	void mouseReleaseEvent(QMouseEvent * mouseEvent) override;
+	void mouseMoveEvent(QMouseEvent * mouseEvent) override;
+	void paintEvent(QPaintEvent * pe) override;
+	void resizeEvent(QResizeEvent * re) override;
+	void wheelEvent(QWheelEvent * we) override;
 
 	float getLevel( int y );
 	int xCoordOfTick( int tick );
@@ -132,6 +132,7 @@ protected:
 	void getSelectedValues(timeMap & selected_values );
 
 	void drawLine( int x0, float y0, int x1, float y1 );
+	void removePoints( int x0, int x1 );
 
 protected slots:
 	void play();
@@ -152,7 +153,7 @@ protected slots:
 	void pasteValues();
 	void deleteSelectedValues();
 
-	void updatePosition( const MidiTime & t );
+	void updatePosition( const TimePos & t );
 
 	void zoomingXChanged();
 	void zoomingYChanged();
@@ -175,8 +176,8 @@ private:
 	static const int TOP_MARGIN = 16;
 
 	static const int DEFAULT_Y_DELTA = 6;
-	static const int DEFAULT_STEPS_PER_TACT = 16;
-	static const int DEFAULT_PPT = 12 * DEFAULT_STEPS_PER_TACT;
+	static const int DEFAULT_STEPS_PER_BAR = 16;
+	static const int DEFAULT_PPB = 12 * DEFAULT_STEPS_PER_BAR;
 
 	static const int VALUES_WIDTH = 64;
 
@@ -208,12 +209,13 @@ private:
 	float m_bottomLevel;
 	float m_topLevel;
 
+	void centerTopBottomScroll();
 	void updateTopBottomLevels();
 
 	QScrollBar * m_leftRightScroll;
 	QScrollBar * m_topBottomScroll;
 
-	MidiTime m_currentPosition;
+	TimePos m_currentPosition;
 
 	Actions m_action;
 
@@ -229,7 +231,7 @@ private:
 	float m_drawLastLevel;
 	tick_t m_drawLastTick;
 
-	int m_ppt;
+	int m_ppb;
 	int m_y_delta;
 	bool m_y_auto;
 
@@ -239,6 +241,7 @@ private:
 
 	EditModes m_editMode;
 
+	bool m_mouseDownLeft;
 	bool m_mouseDownRight; //true if right click is being held down
 
 	TimeLineWidget * m_timeLine;
@@ -262,7 +265,7 @@ private:
 
 signals:
 	void currentPatternChanged();
-	void positionChanged( const MidiTime & );
+	void positionChanged( const TimePos & );
 } ;
 
 
@@ -281,14 +284,14 @@ public:
 	void setCurrentPattern(AutomationPattern* pattern);
 	const AutomationPattern* currentPattern();
 
-	virtual void dropEvent( QDropEvent * _de );
-	virtual void dragEnterEvent( QDragEnterEvent * _dee );
+	void dropEvent( QDropEvent * _de ) override;
+	void dragEnterEvent( QDragEnterEvent * _dee ) override;
 
 	void open(AutomationPattern* pattern);
 
 	AutomationEditor* m_editor;
 
-	QSize sizeHint() const;
+	QSize sizeHint() const override;
 
 public slots:
 	void clearCurrentPattern();
@@ -296,9 +299,12 @@ public slots:
 signals:
 	void currentPatternChanged();
 
+protected:
+	void focusInEvent(QFocusEvent * event) override;
+
 protected slots:
-	void play();
-	void stop();
+	void play() override;
+	void stop() override;
 
 private slots:
 	void updateWindowTitle();

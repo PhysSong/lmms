@@ -29,7 +29,7 @@
 #include "ui_patches_dialog.h"
 #include "LcdSpinBox.h"
 
-#include <fluidsynth.h>
+#include "fluidsynthshims.h"
 #include <QWidget>
 #include <QLabel>
 
@@ -43,7 +43,7 @@ class patchesDialog : public QDialog, private Ui::patchesDialog
 public:
 
 	// Constructor.
-	patchesDialog(QWidget *pParent = 0, Qt::WindowFlags wflags = 0);
+	patchesDialog(QWidget *pParent = 0, Qt::WindowFlags wflags = QFlag(0));
 
 	// Destructor.
 	virtual ~patchesDialog();

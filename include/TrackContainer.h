@@ -37,7 +37,7 @@ class InstrumentTrack;
 class TrackContainerView;
 
 
-class EXPORT TrackContainer : public Model, public JournallingObject
+class LMMS_EXPORT TrackContainer : public Model, public JournallingObject
 {
 	Q_OBJECT
 public:
@@ -51,9 +51,9 @@ public:
 	TrackContainer();
 	virtual ~TrackContainer();
 
-	virtual void saveSettings( QDomDocument & _doc, QDomElement & _parent );
+	void saveSettings( QDomDocument & _doc, QDomElement & _parent ) override;
 
-	virtual void loadSettings( const QDomElement & _this );
+	void loadSettings( const QDomElement & _this ) override;
 
 
 	virtual AutomationPattern * tempoAutomationPattern()
@@ -93,11 +93,14 @@ public:
 		return m_TrackContainerType;
 	}
 
+	virtual AutomatedValueMap automatedValuesAt(TimePos time, int tcoNum = -1) const;
 
 signals:
 	void trackAdded( Track * _track );
 
 protected:
+	static AutomatedValueMap automatedValuesFromTracks(const TrackList &tracks, TimePos timeStart, int tcoNum = -1);
+
 	mutable QReadWriteLock m_tracksMutex;
 
 private:
@@ -108,32 +111,6 @@ private:
 
 	friend class TrackContainerView;
 	friend class Track;
-
-} ;
-
-
-class DummyTrackContainer : public TrackContainer
-{
-public:
-	DummyTrackContainer();
-
-	virtual ~DummyTrackContainer()
-	{
-	}
-
-	virtual QString nodeName() const
-	{
-		return "DummyTrackContainer";
-	}
-
-	InstrumentTrack * dummyInstrumentTrack()
-	{
-		return m_dummyInstrumentTrack;
-	}
-
-
-private:
-	InstrumentTrack * m_dummyInstrumentTrack;
 
 } ;
 

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2017-2017 Tres Finocchiaro <tres.finocchiaro/at/gmail.com>
  *
- * This file is part of LMMS - http://lmms.io
+ * This file is part of LMMS - https://lmms.io
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public
@@ -33,7 +33,12 @@
 
 MainApplication::MainApplication(int& argc, char** argv) :
 	QApplication(argc, argv),
-	m_queuedFile() {}
+	m_queuedFile()
+{
+#if defined(LMMS_BUILD_WIN32)
+	installNativeEventFilter(this);
+#endif
+}
 
 bool MainApplication::event(QEvent* event)
 {
@@ -62,3 +67,38 @@ bool MainApplication::event(QEvent* event)
 			return QApplication::event(event);
 	}
 }
+
+#ifdef LMMS_BUILD_WIN32
+// This can be moved into nativeEventFilter once Qt4 support has been dropped
+bool MainApplication::winEventFilter(MSG* msg, long* result)
+{
+	switch(msg->message)
+	{
+		case WM_STYLECHANGING:
+			if(msg->wParam == GWL_EXSTYLE)
+			{
+				// Prevent plugins making the main window transparent
+				STYLESTRUCT * style = reinterpret_cast<STYLESTRUCT *>(msg->lParam);
+				if(!(style->styleOld & WS_EX_LAYERED))
+				{
+					style->styleNew &= ~WS_EX_LAYERED;
+				}
+				*result = 0;
+				return true;
+			}
+			return false;
+		default:
+			return false;
+	}
+}
+
+bool MainApplication::nativeEventFilter(const QByteArray& eventType,
+					void* message, long* result)
+{
+	if(eventType == "windows_generic_MSG")
+	{
+		return winEventFilter(static_cast<MSG *>(message), result);
+	}
+	return false;
+}
+#endif

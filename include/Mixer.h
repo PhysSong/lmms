@@ -66,7 +66,7 @@ const Octaves BaseOctave = DefaultOctave;
 class MixerWorkerThread;
 
 
-class EXPORT Mixer : public QObject
+class LMMS_EXPORT Mixer : public QObject
 {
 	Q_OBJECT
 public:
@@ -98,9 +98,9 @@ public:
 		Interpolation interpolation;
 		Oversampling oversampling;
 
-		qualitySettings( Mode _m )
+		qualitySettings(Mode m)
 		{
-			switch( _m )
+			switch (m)
 			{
 				case Mode_Draft:
 					interpolation = Interpolation_Linear;
@@ -118,9 +118,9 @@ public:
 			}
 		}
 
-		qualitySettings( Interpolation _i, Oversampling _o ) :
-			interpolation( _i ),
-			oversampling( _o )
+		qualitySettings(Interpolation i, Oversampling o) :
+			interpolation(i),
+			oversampling(o)
 		{
 		}
 
@@ -155,6 +155,7 @@ public:
 
 	void initDevices();
 	void clear();
+	void clearNewPlayHandles();
 
 
 	// audio-device-stuff
@@ -170,10 +171,13 @@ public:
 		return m_audioDevStartFailed;
 	}
 
-	void setAudioDevice( AudioDevice * _dev );
+	//! Set new audio device. Old device will be deleted,
+	//! unless it's stored using storeAudioDevice
 	void setAudioDevice( AudioDevice * _dev,
 				const struct qualitySettings & _qs,
-							bool _needs_fifo );
+				bool _needs_fifo,
+				bool startNow );
+	void storeAudioDevice();
 	void restoreAudioDevice();
 	inline AudioDevice * audioDev()
 	{
@@ -182,14 +186,14 @@ public:
 
 
 	// audio-port-stuff
-	inline void addAudioPort( AudioPort * _port )
+	inline void addAudioPort(AudioPort * port)
 	{
 		requestChangeInModel();
-		m_audioPorts.push_back( _port );
+		m_audioPorts.push_back(port);
 		doneChangeInModel();
 	}
 
-	void removeAudioPort( AudioPort * _port );
+	void removeAudioPort(AudioPort * port);
 
 
 	// MIDI-client-stuff
@@ -214,7 +218,7 @@ public:
 		return m_playHandles;
 	}
 
-	void removePlayHandlesOfTypes( Track * _track, const quint8 types );
+	void removePlayHandlesOfTypes(Track * track, const quint8 types);
 
 
 	// methods providing information for other classes
@@ -251,27 +255,33 @@ public:
 		return m_masterGain;
 	}
 
-	inline void setMasterGain( const float _mo )
+	inline void setMasterGain(const float mo)
 	{
-		m_masterGain = _mo;
+		m_masterGain = mo;
 	}
 
 
-	static inline sample_t clip( const sample_t _s )
+	static inline sample_t clip(const sample_t s)
 	{
-		if( _s > 1.0f )
+		if (s > 1.0f)
 		{
 			return 1.0f;
 		}
-		else if( _s < -1.0f )
+		else if (s < -1.0f)
 		{
 			return -1.0f;
 		}
-		return _s;
+		return s;
 	}
 
 
-	void getPeakValues( sampleFrame * _ab, const f_cnt_t _frames, float & peakLeft, float & peakRight ) const;
+	struct StereoSample
+	{
+		StereoSample(sample_t _left, sample_t _right) : left(_left), right(_right) {}
+		sample_t left;
+		sample_t right;
+	};
+	StereoSample getPeakValues(sampleFrame * ab, const f_cnt_t _frames) const;
 
 
 	bool criticalXRuns() const;
@@ -298,13 +308,17 @@ public:
 		return hasFifoWriter() ? m_fifo->read() : renderNextBuffer();
 	}
 
-	void changeQuality( const struct qualitySettings & _qs );
+	void changeQuality(const struct qualitySettings & qs);
 
 	inline bool isMetronomeActive() const { return m_metronomeActive; }
 	inline void setMetronomeActive(bool value = true) { m_metronomeActive = value; }
 
+	//! Block until a change in model can be done (i.e. wait for audio thread)
 	void requestChangeInModel();
 	void doneChangeInModel();
+
+	static bool isAudioDevNameValid(QString name);
+	static bool isMidiDevNameValid(QString name);
 
 
 signals:
@@ -319,7 +333,7 @@ private:
 	class fifoWriter : public QThread
 	{
 	public:
-		fifoWriter( Mixer * _mixer, fifo * _fifo );
+		fifoWriter(Mixer * mixer, fifo * _fifo);
 
 		void finish();
 
@@ -329,7 +343,7 @@ private:
 		fifo * m_fifo;
 		volatile bool m_writing;
 
-		virtual void run();
+		void run() override;
 
 		void write( surroundSampleFrame * buffer );
 
@@ -339,7 +353,7 @@ private:
 	Mixer( bool renderOnly );
 	virtual ~Mixer();
 
-	void startProcessing( bool _needs_fifo = true );
+	void startProcessing(bool needsFifo = true);
 	void stopProcessing();
 
 
@@ -349,8 +363,14 @@ private:
 
 	const surroundSampleFrame * renderNextBuffer();
 
+	void swapBuffers();
+
+	void handleMetronome();
+
 	void clearInternal();
 
+	//! Called by the audio thread to give control to other threads,
+	//! such that they can do changes in the model (like e.g. removing effects)
 	void runChangesInModel();
 
 	bool m_renderOnly;
@@ -365,13 +385,8 @@ private:
 	int m_inputBufferRead;
 	int m_inputBufferWrite;
 
-	surroundSampleFrame * m_readBuf;
-	surroundSampleFrame * m_writeBuf;
-
-	QVector<surroundSampleFrame *> m_bufferPool;
-	int m_readBuffer;
-	int m_writeBuffer;
-	int m_poolDepth;
+	surroundSampleFrame * m_outputBufferRead;
+	surroundSampleFrame * m_outputBufferWrite;
 
 	// worker thread stuff
 	QVector<MixerWorkerThread *> m_workers;
@@ -390,6 +405,7 @@ private:
 	bool m_isProcessing;
 
 	// audio device stuff
+	void doSetAudioDevice( AudioDevice *_dev );
 	AudioDevice * m_audioDev;
 	AudioDevice * m_oldAudioDev;
 	QString m_audioDevName;
@@ -421,6 +437,7 @@ private:
 
 	friend class LmmsCore;
 	friend class MixerWorkerThread;
+	friend class ProjectRenderer;
 
 } ;
 

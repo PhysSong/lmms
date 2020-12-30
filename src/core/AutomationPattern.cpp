@@ -28,6 +28,7 @@
 
 #include "AutomationPatternView.h"
 #include "AutomationTrack.h"
+#include "LocaleHelper.h"
 #include "Note.h"
 #include "ProjectJournal.h"
 #include "BBTrackContainer.h"
@@ -50,7 +51,7 @@ AutomationPattern::AutomationPattern( AutomationTrack * _auto_track ) :
 	m_isRecording( false ),
 	m_lastRecordedValue( 0 )
 {
-	changeLength( MidiTime( 1, 0 ) );
+	changeLength( TimePos( 1, 0 ) );
 	if( getTrack() )
 	{
 		switch( getTrack()->trackContainer()->type() )
@@ -98,16 +99,6 @@ AutomationPattern::AutomationPattern( const AutomationPattern & _pat_to_copy ) :
 	}
 }
 
-
-
-
-AutomationPattern::~AutomationPattern()
-{
-}
-
-
-
-
 bool AutomationPattern::addObject( AutomatableModel * _obj, bool _search_dup )
 {
 	if( _search_dup && m_objects.contains(_obj) )
@@ -119,7 +110,7 @@ bool AutomationPattern::addObject( AutomatableModel * _obj, bool _search_dup )
 	if( m_objects.isEmpty() && hasAutomation() == false )
 	{
 		// then initialize first value
-		putValue( MidiTime(0), _obj->inverseScaledValue( _obj->value<float>() ), false );
+		putValue( TimePos(0), _obj->inverseScaledValue( _obj->value<float>() ), false );
 	}
 
 	m_objects += _obj;
@@ -154,11 +145,11 @@ void AutomationPattern::setProgressionType(
 void AutomationPattern::setTension( QString _new_tension )
 {
 	bool ok;
-	float nt = _new_tension.toFloat( & ok );
+	float nt = LocaleHelper::toFloat(_new_tension, & ok);
 
 	if( ok && nt > -0.01 && nt < 1.01 )
 	{
-		m_tension = _new_tension.toFloat();
+		m_tension = nt;
 	}
 }
 
@@ -185,11 +176,18 @@ const AutomationPattern::objectVector& AutomationPattern::objects() const
 
 
 
-MidiTime AutomationPattern::timeMapLength() const
+TimePos AutomationPattern::timeMapLength() const
 {
-	if( m_timeMap.isEmpty() ) return 0;
+	TimePos one_bar = TimePos(1, 0);
+	if (m_timeMap.isEmpty()) { return one_bar; }
+
 	timeMap::const_iterator it = m_timeMap.end();
-	return MidiTime( qMax( MidiTime( (it-1).key() ).getTact() + 1, 1 ), 0 );
+	tick_t last_tick = static_cast<tick_t>((it-1).key());
+	// if last_tick is 0 (single item at tick 0)
+	// return length as a whole bar to prevent disappearing TCO
+	if (last_tick == 0) { return one_bar; }
+
+	return TimePos(last_tick);
 }
 
 
@@ -197,20 +195,21 @@ MidiTime AutomationPattern::timeMapLength() const
 
 void AutomationPattern::updateLength()
 {
-	changeLength( timeMapLength() );
+	// Do not resize down in case user manually extended up
+	changeLength(qMax(length(), timeMapLength()));
 }
 
 
 
 
-MidiTime AutomationPattern::putValue( const MidiTime & time,
+TimePos AutomationPattern::putValue( const TimePos & time,
 					const float value,
 					const bool quantPos,
 					const bool ignoreSurroundingPoints )
 {
 	cleanObjects();
 
-	MidiTime newTime = quantPos ?
+	TimePos newTime = quantPos ?
 				Note::quantized( time, quantization() ) :
 				time;
 
@@ -232,12 +231,7 @@ MidiTime AutomationPattern::putValue( const MidiTime & time,
 	}
 	generateTangents( it, 3 );
 
-	// we need to maximize our length in case we're part of a hidden
-	// automation track as the user can't resize this pattern
-	if( getTrack() && getTrack()->type() == Track::HiddenAutomationTrack )
-	{
-		updateLength();
-	}
+	updateLength();
 
 	emit dataChanged();
 
@@ -247,7 +241,7 @@ MidiTime AutomationPattern::putValue( const MidiTime & time,
 
 
 
-void AutomationPattern::removeValue( const MidiTime & time )
+void AutomationPattern::removeValue( const TimePos & time )
 {
 	cleanObjects();
 
@@ -260,17 +254,14 @@ void AutomationPattern::removeValue( const MidiTime & time )
 	}
 	generateTangents(it, 3);
 
-	if( getTrack() && getTrack()->type() == Track::HiddenAutomationTrack )
-	{
-		updateLength();
-	}
+	updateLength();
 
 	emit dataChanged();
 }
 
 
 
-void AutomationPattern::recordValue(MidiTime time, float value)
+void AutomationPattern::recordValue(TimePos time, float value)
 {
 	if( value != m_lastRecordedValue )
 	{
@@ -295,14 +286,14 @@ void AutomationPattern::recordValue(MidiTime time, float value)
  * @param true to snip x position
  * @return
  */
-MidiTime AutomationPattern::setDragValue( const MidiTime & time,
+TimePos AutomationPattern::setDragValue( const TimePos & time,
 						const float value,
 						const bool quantPos,
 						const bool controlKey )
 {
 	if( m_dragging == false )
 	{
-		MidiTime newTime = quantPos  ?
+		TimePos newTime = quantPos  ?
 				Note::quantized( time, quantization() ) :
 							time;
 		this->removeValue( newTime );
@@ -336,7 +327,7 @@ void AutomationPattern::applyDragValue()
 
 
 
-float AutomationPattern::valueAt( const MidiTime & _time ) const
+float AutomationPattern::valueAt( const TimePos & _time ) const
 {
 	if( m_timeMap.isEmpty() )
 	{
@@ -404,7 +395,7 @@ float AutomationPattern::valueAt( timeMap::const_iterator v, int offset ) const
 
 
 
-float *AutomationPattern::valuesAfter( const MidiTime & _time ) const
+float *AutomationPattern::valuesAfter( const TimePos & _time ) const
 {
 	timeMap::ConstIterator v = m_timeMap.lowerBound( _time );
 	if( v == m_timeMap.end() || (v+1) == m_timeMap.end() )
@@ -445,12 +436,12 @@ void AutomationPattern::flipY( int min, int max )
 		if ( min < 0 )
 		{
 			tempValue = valueAt( ( iterate + i ).key() ) * -1;
-			putValue( MidiTime( (iterate + i).key() ) , tempValue, false);
+			putValue( TimePos( (iterate + i).key() ) , tempValue, false);
 		}
 		else
 		{
 			tempValue = max - valueAt( ( iterate + i ).key() );
-			putValue( MidiTime( (iterate + i).key() ) , tempValue, false);
+			putValue( TimePos( (iterate + i).key() ) , tempValue, false);
 		}
 	}
 
@@ -489,12 +480,12 @@ void AutomationPattern::flipX( int length )
 		if ( realLength < length )
 		{
 			tempValue = valueAt( ( iterate + numPoints ).key() );
-			putValue( MidiTime( length ) , tempValue, false);
+			putValue( TimePos( length ) , tempValue, false);
 			numPoints++;
 			for( int i = 0; i <= numPoints; i++ )
 			{
 				tempValue = valueAt( ( iterate + i ).key() );
-				MidiTime newTime = MidiTime( length - ( iterate + i ).key() );
+				TimePos newTime = TimePos( length - ( iterate + i ).key() );
 				tempMap[newTime] = tempValue;
 			}
 		}
@@ -503,15 +494,15 @@ void AutomationPattern::flipX( int length )
 			for( int i = 0; i <= numPoints; i++ )
 			{
 				tempValue = valueAt( ( iterate + i ).key() );
-				MidiTime newTime;
+				TimePos newTime;
 
 				if ( ( iterate + i ).key() <= length )
 				{
-					newTime = MidiTime( length - ( iterate + i ).key() );
+					newTime = TimePos( length - ( iterate + i ).key() );
 				}
 				else
 				{
-					newTime = MidiTime( ( iterate + i ).key() );
+					newTime = TimePos( ( iterate + i ).key() );
 				}
 				tempMap[newTime] = tempValue;
 			}
@@ -523,7 +514,7 @@ void AutomationPattern::flipX( int length )
 		{
 			tempValue = valueAt( ( iterate + i ).key() );
 			cleanObjects();
-			MidiTime newTime = MidiTime( realLength - ( iterate + i ).key() );
+			TimePos newTime = TimePos( realLength - ( iterate + i ).key() );
 			tempMap[newTime] = tempValue;
 		}
 	}
@@ -547,6 +538,11 @@ void AutomationPattern::saveSettings( QDomDocument & _doc, QDomElement & _this )
 	_this.setAttribute( "prog", QString::number( progressionType() ) );
 	_this.setAttribute( "tens", QString::number( getTension() ) );
 	_this.setAttribute( "mute", QString::number( isMuted() ) );
+	
+	if( usesCustomClipColor() )
+	{
+		_this.setAttribute( "color", color().name() );
+	}
 
 	for( timeMap::const_iterator it = m_timeMap.begin();
 						it != m_timeMap.end(); ++it )
@@ -595,12 +591,18 @@ void AutomationPattern::loadSettings( const QDomElement & _this )
 		if( element.tagName() == "time" )
 		{
 			m_timeMap[element.attribute( "pos" ).toInt()]
-				= element.attribute( "value" ).toFloat();
+				= LocaleHelper::toFloat(element.attribute("value"));
 		}
 		else if( element.tagName() == "object" )
 		{
 			m_idsToResolve << element.attribute( "id" ).toInt();
 		}
+	}
+	
+	if( _this.hasAttribute( "color" ) )
+	{
+		useCustomClipColor( true );
+		setColor( _this.attribute( "color" ) );
 	}
 
 	int len = _this.attribute( "len" ).toInt();
@@ -629,12 +631,7 @@ const QString AutomationPattern::name() const
 	{
 		return m_objects.first()->fullDisplayName();
 	}
-	return tr( "Drag a control while pressing <%1>" ).arg(
-	#ifdef LMMS_BUILD_APPLE
-		"⌘");
-	#else
-		"Ctrl");
-	#endif
+	return tr( "Drag a control while pressing <%1>" ).arg(UI_CTRL_KEY);
 }
 
 
@@ -785,6 +782,26 @@ void AutomationPattern::resolveAllIDs()
 						if( o && dynamic_cast<AutomatableModel *>( o ) )
 						{
 							a->addObject( dynamic_cast<AutomatableModel *>( o ), false );
+						}
+						else
+						{
+							// FIXME: Remove this block once the automation system gets fixed
+							// This is a temporary fix for https://github.com/LMMS/lmms/issues/3781
+							o = Engine::projectJournal()->journallingObject(ProjectJournal::idFromSave(*k));
+							if( o && dynamic_cast<AutomatableModel *>( o ) )
+							{
+								a->addObject( dynamic_cast<AutomatableModel *>( o ), false );
+							}
+							else
+							{
+								// FIXME: Remove this block once the automation system gets fixed
+								// This is a temporary fix for https://github.com/LMMS/lmms/issues/4781
+								o = Engine::projectJournal()->journallingObject(ProjectJournal::idToSave(*k));
+								if( o && dynamic_cast<AutomatableModel *>( o ) )
+								{
+									a->addObject( dynamic_cast<AutomatableModel *>( o ), false );
+								}
+							}
 						}
 					}
 					a->m_idsToResolve.clear();

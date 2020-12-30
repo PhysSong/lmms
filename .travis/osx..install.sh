@@ -1,20 +1,22 @@
 #!/usr/bin/env bash
 
-PACKAGES="cmake pkgconfig fftw libogg libvorbis libsndfile libsamplerate jack sdl stk portaudio node fltk"
+set -e
 
-if [ "$QT5" ]; then
-	PACKAGES="$PACKAGES homebrew/versions/qt55"
-else
-	PACKAGES="$PACKAGES cartr/qt4/qt"
+PACKAGES="cmake pkg-config libogg libvorbis lame libsndfile libsamplerate lilv lv2 jack sdl libgig libsoundio stk fluid-synth portaudio node fltk qt carla"
+
+if "${TRAVIS}"; then
+   PACKAGES="$PACKAGES ccache"
 fi
 
+# removing already installed packages from the list
+for p in $(brew list); do
+	PACKAGES=${PACKAGES//$p/}
+done;
+
 # shellcheck disable=SC2086
-brew install $PACKAGES ccache
+brew install $PACKAGES
 
-# Recompile fluid-synth without CoreAudio per issues #649
-# Changes to fluid-synth.rb must be pushed to URL prior to use
-url=$(git remote get-url origin)
-branch=$(git symbolic-ref --short HEAD)
-brew install --build-from-source "$url/raw/$branch/cmake/apple/fluid-synth.rb"
+# fftw tries to install gcc which conflicts with travis
+brew install fftw --ignore-dependencies
 
-sudo npm install -g appdmg
+npm install -g appdmg

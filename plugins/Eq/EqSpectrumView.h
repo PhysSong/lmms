@@ -24,6 +24,7 @@
 #define EQSPECTRUMVIEW_H
 
 #include <QPainter>
+#include <QPainterPath>
 #include <QWidget>
 
 #include "fft_helpers.h"
@@ -32,7 +33,6 @@
 
 
 const int MAX_BANDS = 2048;
-
 class EqAnalyser
 {
 public:
@@ -61,6 +61,7 @@ private:
 	int m_sampleRate;
 	bool m_active;
 	bool m_inProgress;
+	float m_fftWindow[FFT_BUFFER_SIZE];
 };
 
 

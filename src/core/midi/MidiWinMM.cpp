@@ -49,7 +49,7 @@ MidiWinMM::~MidiWinMM()
 
 
 
-void MidiWinMM::processOutEvent( const MidiEvent& event, const MidiTime& time, const MidiPort* port )
+void MidiWinMM::processOutEvent( const MidiEvent& event, const TimePos& time, const MidiPort* port )
 {
 	const DWORD shortMsg = ( event.type() + event.channel() ) +
 				( ( event.param( 0 ) & 0xff ) << 8 ) +
@@ -248,9 +248,13 @@ void MidiWinMM::closeDevices()
 	m_outputSubs.clear();
 
 	QMapIterator<HMIDIIN, QString> i( m_inputDevices );
+
+	HMIDIIN hInDev;
 	while( i.hasNext() )
 	{
-		midiInClose( i.next().key() );
+		hInDev = i.next().key();
+		midiInReset( hInDev );
+		midiInClose( hInDev );
 	}
 
 	QMapIterator<HMIDIOUT, QString> o( m_outputDevices );

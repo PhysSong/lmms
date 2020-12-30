@@ -26,7 +26,7 @@
 #include "stereo_matrix.h"
 
 #include "embed.h"
-
+#include "plugin_export.h"
 
 extern "C"
 {
@@ -35,7 +35,7 @@ Plugin::Descriptor PLUGIN_EXPORT stereomatrix_plugin_descriptor =
 {
 	STRINGIFY( PLUGIN_NAME ),
 	"Stereo Matrix",
-	QT_TRANSLATE_NOOP( "pluginBrowser",
+	QT_TRANSLATE_NOOP( "PluginBrowser",
 				"Plugin for freely manipulating stereo output" ),
 	"Paul Giblock <drfaygo/at/gmail.com>",
 	0x0100,
@@ -113,7 +113,7 @@ extern "C"
 {
 
 // necessary for getting instance out of shared lib
-Plugin * PLUGIN_EXPORT lmms_plugin_main( Model * _parent, void * _data )
+PLUGIN_EXPORT Plugin * lmms_plugin_main( Model * _parent, void * _data )
 {
 	return( new stereoMatrixEffect( _parent,
 		static_cast<const Plugin::Descriptor::SubPluginFeatures::Key *>(

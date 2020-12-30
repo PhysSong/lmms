@@ -26,7 +26,7 @@
 #include "Engine.h"
 #include "embed.h"
 #include "interpolation.h"
-
+#include "plugin_export.h"
 
 extern "C"
 {
@@ -35,7 +35,7 @@ Plugin::Descriptor PLUGIN_EXPORT delay_plugin_descriptor =
 {
 	STRINGIFY( PLUGIN_NAME ),
 	"Delay",
-	QT_TRANSLATE_NOOP( "pluginBrowser", "A native delay plugin" ),
+	QT_TRANSLATE_NOOP( "PluginBrowser", "A native delay plugin" ),
 	"Dave French <contact/dot/dave/dot/french3/at/googlemail/dot/com>",
 	0x0100,
 	Plugin::Effect,
@@ -157,7 +157,7 @@ extern "C"
 {
 
 //needed for getting plugin out of shared lib
-Plugin * PLUGIN_EXPORT lmms_plugin_main( Model* parent, void* data )
+PLUGIN_EXPORT Plugin * lmms_plugin_main( Model* parent, void* data )
 {
 	return new DelayEffect( parent , static_cast<const Plugin::Descriptor::SubPluginFeatures::Key *>( data ) );
 }

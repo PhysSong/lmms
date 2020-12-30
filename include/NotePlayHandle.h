@@ -26,7 +26,9 @@
 #ifndef NOTE_PLAY_HANDLE_H
 #define NOTE_PLAY_HANDLE_H
 
-#include "AtomicInt.h"
+#include <memory>
+
+#include "BasicFilters.h"
 #include "Note.h"
 #include "PlayHandle.h"
 #include "Track.h"
@@ -36,17 +38,19 @@ class QReadWriteLock;
 class InstrumentTrack;
 class NotePlayHandle;
 
-template<ch_cnt_t=DEFAULT_CHANNELS> class BasicFilters;
 typedef QList<NotePlayHandle *> NotePlayHandleList;
 typedef QList<const NotePlayHandle *> ConstNotePlayHandleList;
 
 
-class EXPORT NotePlayHandle : public PlayHandle, public Note
+class LMMS_EXPORT NotePlayHandle : public PlayHandle, public Note
 {
 	MM_OPERATORS
 public:
 	void * m_pluginData;
-	BasicFilters<> * m_filter;
+	std::unique_ptr<BasicFilters<>> m_filter;
+
+	// length of the declicking fade in
+	fpp_t m_fadeInLength;
 
 	// specifies origin of NotePlayHandle
 	enum Origins
@@ -66,16 +70,15 @@ public:
 					NotePlayHandle* parent = NULL,
 					int midiEventChannel = -1,
 					Origin origin = OriginPattern );
-	virtual ~NotePlayHandle() {}
-	void done();
+	virtual ~NotePlayHandle();
 
 	void * operator new ( size_t size, void * p )
 	{
 		return p;
 	}
 
-	virtual void setVolume( volume_t volume );
-	virtual void setPanning( panning_t panning );
+	void setVolume( volume_t volume ) override;
+	void setPanning( panning_t panning ) override;
 
 	int midiKey() const;
 	int midiChannel() const
@@ -105,10 +108,10 @@ public:
 	}
 
 	/*! Renders one chunk using the attached instrument into the buffer */
-	virtual void play( sampleFrame* buffer );
+	void play( sampleFrame* buffer ) override;
 
 	/*! Returns whether playback of note is finished and thus handle can be deleted */
-	virtual bool isFinished() const
+	bool isFinished() const override
 	{
 		return m_released && framesLeft() <= 0;
 	}
@@ -120,7 +123,7 @@ public:
 	fpp_t framesLeftForCurrentPeriod() const;
 
 	/*! Returns whether the play handle plays on a certain track */
-	virtual bool isFromTrack( const Track* _track ) const;
+	bool isFromTrack( const Track* _track ) const override;
 
 	/*! Releases the note (and plays release frames */
 	void noteOff( const f_cnt_t offset = 0 );
@@ -154,6 +157,11 @@ public:
 	bool isReleased() const
 	{
 		return m_released;
+	}
+
+	bool isReleaseStarted() const
+	{
+		return m_releaseStarted;
 	}
 
 	/*! Returns total numbers of frames played so far */
@@ -236,19 +244,19 @@ public:
 	}
 
 	/*! Process note detuning automation */
-	void processMidiTime( const MidiTime& time );
+	void processTimePos( const TimePos& time );
 
 	/*! Updates total length (m_frames) depending on a new tempo */
 	void resize( const bpm_t newTempo );
 
 	/*! Set song-global offset (relative to containing pattern) in order to properly perform the note detuning */
-	void setSongGlobalParentOffset( const MidiTime& offset )
+	void setSongGlobalParentOffset( const TimePos& offset )
 	{
 		m_songGlobalParentOffset = offset;
 	}
 
 	/*! Returns song-global offset */
-	const MidiTime& songGlobalParentOffset() const
+	const TimePos& songGlobalParentOffset() const
 	{
 		return m_songGlobalParentOffset;
 	}
@@ -297,6 +305,8 @@ private:
 											// release of note
 	NotePlayHandleList m_subNotes;			// used for chords and arpeggios
 	volatile bool m_released;				// indicates whether note is released
+	bool m_releaseStarted;
+	bool m_hasMidiNote;
 	bool m_hasParent;						// indicates whether note has parent
 	NotePlayHandle * m_parent;			// parent note
 	bool m_hadChildren;
@@ -313,7 +323,7 @@ private:
 	float m_unpitchedFrequency;
 
 	BaseDetuning* m_baseDetuning;
-	MidiTime m_songGlobalParentOffset;
+	TimePos m_songGlobalParentOffset;
 
 	int m_midiChannel;
 	Origin m_origin;
@@ -339,11 +349,12 @@ public:
 					NotePlayHandle::Origin origin = NotePlayHandle::OriginPattern );
 	static void release( NotePlayHandle * nph );
 	static void extend( int i );
+	static void free();
 
 private:
 	static NotePlayHandle ** s_available;
 	static QReadWriteLock s_mutex;
-	static AtomicInt s_availableIndex;
+	static std::atomic_int s_availableIndex;
 	static int s_size;
 };
 

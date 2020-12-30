@@ -47,7 +47,7 @@ public:
 
 
 private:
-	virtual void modelChanged();
+	void modelChanged() override;
 
 	GroupBox * m_midiInputGroupBox;
 	LcdSpinBox * m_inputChannelSpinBox;
@@ -71,6 +71,11 @@ class InstrumentMiscView : public QWidget
 public:
 	InstrumentMiscView( InstrumentTrack *it, QWidget* parent );
 	~InstrumentMiscView();
+
+	GroupBox * pitchGroupBox()
+	{
+		return m_pitchGroupBox;
+	}
 
 private:
 

@@ -29,13 +29,14 @@
 #include "Model.h"
 
 
-class EXPORT ModelView
+class LMMS_EXPORT ModelView
 {
 public:
 	ModelView( Model* model, QWidget* widget );
 	virtual ~ModelView();
 
 	virtual void setModel( Model* model, bool isOldModelValid = true );
+	virtual void unsetModel();
 
 	Model* model()
 	{

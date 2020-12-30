@@ -1468,7 +1468,7 @@ Ao premer co botón dereito aparece un menú de contexto no que se pode cambiar 
     <name>EnvelopeAndLfoView</name>
     <message>
         <source>DEL</source>
-        <translation>TMP REV</translation>
+        <translation>DEL</translation>
     </message>
     <message>
         <source>Predelay:</source>
@@ -1540,7 +1540,7 @@ Ao premer co botón dereito aparece un menú de contexto no que se pode cambiar 
     </message>
     <message>
         <source>AMT</source>
-        <translation>CANTIDADE</translation>
+        <translation>AMT</translation>
     </message>
     <message>
         <source>Modulation amount:</source>
@@ -8772,7 +8772,7 @@ Facendo duplo clic sobre calquera dos engadidos mostra información sobre os por
     </message>
 </context>
 <context>
-    <name>papuInstrument</name>
+    <name>FreeBoyInstrument</name>
     <message>
         <source>Sweep time</source>
         <translation>Tempo da varredura</translation>
@@ -8867,7 +8867,7 @@ Facendo duplo clic sobre calquera dos engadidos mostra información sobre os por
     </message>
 </context>
 <context>
-    <name>papuInstrumentView</name>
+    <name>FreeBoyInstrumentView</name>
     <message>
         <source>Sweep Time:</source>
         <translation>Tempo da varredura:</translation>
