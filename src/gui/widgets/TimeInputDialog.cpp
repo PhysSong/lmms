@@ -63,10 +63,10 @@ void TimeInputDialog::setTimeModel(int time_mode)
 	return;
 }
 
-void TimeInputDialog::setMilliSeconds(int64_t milliseconds)
+void TimeInputDialog::setMilliSeconds(tick_t milliseconds)
 {
 	m_milliseconds = ((milliseconds > 0) ? milliseconds : 0);
-	int64_t ticks;
+	tick_t ticks;
 	switch (m_timemode) {
 	case MinutesSeconds:
 		ui->majorInput->setValue(m_milliseconds / 60000);
@@ -85,14 +85,14 @@ void TimeInputDialog::setMilliSeconds(int64_t milliseconds)
 	}
 }
 
-int64_t TimeInputDialog::millisecsToTicks(int64_t milliseconds, int tempo)
+tick_t TimeInputDialog::millisecsToTicks(tick_t milliseconds, int tempo)
 {
 	return ((milliseconds * tempo * (DefaultTicksPerBar / 4)) / 60000);
 }
 
-int64_t TimeInputDialog::totalTicks(int bars, int beats, int ticks)
+tick_t TimeInputDialog::totalTicks(int bars, int beats, int ticks)
 {
-	int64_t ticksTotal = 0;
+	tick_t ticksTotal = 0;
 	ticksTotal += (bars - 1) * Engine::getSong()->ticksPerBar();
 	ticksTotal += ((beats -1) * Engine::getSong()->ticksPerBar())
 				/ Engine::getSong()->getTimeSigModel().getNumerator();
@@ -100,7 +100,7 @@ int64_t TimeInputDialog::totalTicks(int bars, int beats, int ticks)
 	return ticksTotal;
 }
 
-int64_t TimeInputDialog::totalMilliseconds(int mins, int secs, int milli)
+tick_t TimeInputDialog::totalMilliseconds(int mins, int secs, int milli)
 {
 	return (mins * 60000 + secs * 1000 + milli);
 }
@@ -112,9 +112,9 @@ void TimeInputDialog::setSpinRange(range Major, range Minor, range Milli)
 	ui->milliInput->setRange(Milli.first, Milli.second);
 }
 
-int64_t TimeInputDialog::getTicks()
+tick_t TimeInputDialog::getTicks()
 {
-	int64_t ticks = 0;
+	tick_t ticks = 0;
 	switch (m_timemode)
 	{
 	case MinutesSeconds:

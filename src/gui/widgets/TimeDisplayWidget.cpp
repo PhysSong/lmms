@@ -131,39 +131,39 @@ void TimeDisplayWidget::mousePressEvent( QMouseEvent* mouseEvent )
 }
 
 
-void TimeDisplayWidget::contextMenuEvent( QContextMenuEvent *event )
+void TimeDisplayWidget::contextMenuEvent(QContextMenuEvent *event)
 {
 	//: The "Timeline" here is the caption of the context menu of the widget that displays the time
-	CaptionMenu contextMenu( tr( "Timeline" ) );
+	CaptionMenu contextMenu(tr("Timeline"));
 	//: This is an item on the menu, which provides the ability to jump (navigate) to a user specified time
-	contextMenu.addAction( tr( "Go to..." ) );
-	QAction* action  = contextMenu.exec( QCursor::pos() );
+	contextMenu.addAction(tr("Go to..."));
+	QAction* action = contextMenu.exec(QCursor::pos());
 
-	if ( action )
+	if (action)
 	{
-		m_timeinputbox = new TimeInputDialog( this );
-		m_timeinputbox->setTimeModel( this->m_displayMode );
-		m_timeinputbox->setMilliSeconds( s->getMilliseconds() );
+		m_timeinputbox = new TimeInputDialog(this);
+		m_timeinputbox->setTimeModel(this->m_displayMode);
+		m_timeinputbox->setMilliSeconds(s->getMilliseconds());
 		m_timeinputbox->show();
-		connect( m_timeinputbox, SIGNAL( accepted() ), this, SLOT( timeJump() ) );
+		connect(m_timeinputbox, SIGNAL(accepted()), this, SLOT(timeJump()));
 	}
 
 	return;
 }
 
 
-void TimeDisplayWidget::wheelEvent( QWheelEvent *event )
+void TimeDisplayWidget::wheelEvent(QWheelEvent *event)
 {
-	int64_t playPos = s->getPlayPos().getTicks() + event->angleDelta().y();
+	tick_t playPos = s->getPlayPos().getTicks() + event->angleDelta().y();
 	playPos = playPos > 0 ? playPos : 1;
 
-	if ( s->isPlaying() )
+	if (s->isPlaying())
 	{
-		s->setPlayPos( playPos, s->playMode() );
+		s->setToTime(playPos, s->playMode());
 	}
 	else
 	{
-		s->setPlayPos( playPos, Song::PlayModes::Mode_PlaySong );
+		s->setToTime(playPos, Song::PlayModes::Mode_PlaySong);
 	}
 
 	event->accept();
@@ -172,12 +172,12 @@ void TimeDisplayWidget::wheelEvent( QWheelEvent *event )
 
 void TimeDisplayWidget::timeJump()
 {
-	if ( s->isPlaying() )
+	if (s->isPlaying())
 	{
-		s->setPlayPos( m_timeinputbox->getTicks(), s->playMode() );
+		s->setToTime(m_timeinputbox->getTicks());
 	}
 	else
 	{
-		s->setPlayPos( m_timeinputbox->getTicks(), Song::PlayModes::Mode_PlaySong );
+		s->setToTime(m_timeinputbox->getTicks(), Song::PlayModes::Mode_PlaySong);
 	}
 }

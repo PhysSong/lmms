@@ -89,7 +89,7 @@ TrackContentObject::~TrackContentObject()
  */
 void TrackContentObject::movePosition( const TimePos & pos )
 {
-	TimePos newPos = qMax(0, pos.getTicks());
+	TimePos newPos = qMax<tick_t>(0, pos.getTicks());
 	if (m_startPosition != newPos)
 	{
 		Engine::mixer()->requestChangeInModel();

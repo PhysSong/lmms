@@ -766,7 +766,7 @@ void TrackContentObjectView::mouseMoveEvent( QMouseEvent * me )
 		QVector<selectableObject *> so =
 			m_trackView->trackContainerView()->selectedObjects();
 		QVector<TrackContentObject *> tcos; // List of selected clips
-		int leftmost = 0; // Leftmost clip's offset from grabbed clip
+		tick_t leftmost = 0; // Leftmost clip's offset from grabbed clip
 		// Populate tcos, find leftmost
 		for( QVector<selectableObject *>::iterator it = so.begin();
 							it != so.end(); ++it )

@@ -44,8 +44,8 @@ public:
     explicit TimeInputDialog(QWidget *parent = nullptr);
     ~TimeInputDialog();
     void setTimeModel(int time_mode);
-    void setMilliSeconds(int64_t milliseconds);
-    int64_t getTicks();  // User input
+    void setMilliSeconds(tick_t milliseconds);
+    tick_t getTicks();  // User input
 
 private:
     enum DisplayModes
@@ -57,9 +57,9 @@ private:
     typedef DisplayModes DisplayMode;
 
     Ui::TimeInputDialog *ui;
-    int64_t millisecsToTicks(int64_t milliseconds, int tempo);
-    int64_t totalTicks(int bars, int beats, int ticks);
-    int64_t totalMilliseconds(int mins, int secs, int milli);
+    tick_t millisecsToTicks(tick_t milliseconds, int tempo);
+    tick_t totalTicks(int bars, int beats, int ticks);
+    tick_t totalMilliseconds(int mins, int secs, int milli);
     int m_timemode;
     int64_t m_milliseconds;
     typedef QPair<int, int> range;

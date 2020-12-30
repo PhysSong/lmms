@@ -2138,7 +2138,7 @@ void AutomationEditor::updatePosition(const TimePos & t )
 		}
 		else if( t < m_currentPosition )
 		{
-			TimePos t_ = qMax( t - w * TimePos::ticksPerBar() *
+			TimePos t_ = qMax<tick_t>( t - w * TimePos::ticksPerBar() *
 					TimePos::ticksPerBar() / m_ppb, 0 );
 			m_leftRightScroll->setValue( t_.getBar() *
 							TimePos::ticksPerBar() );

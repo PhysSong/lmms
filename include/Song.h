@@ -364,8 +364,6 @@ public slots:
 
 	void addBBTrack();
 
-	void setPlayPos( int64_t ticks, PlayModes playMode );
-
 
 private slots:
 	void insertBar();
@@ -405,6 +403,8 @@ private:
 		return m_playPos[m_playMode].getTicks() * Engine::framesPerTick() +
 			m_playPos[m_playMode].currentFrame();
 	}
+
+	void setPlayPos( tick_t ticks, PlayModes playMode );
 
 	void saveControllerStates( QDomDocument & doc, QDomElement & element );
 	void restoreControllerStates( const QDomElement & element );
