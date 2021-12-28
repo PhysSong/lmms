@@ -131,7 +131,8 @@ VstPlugin::VstPlugin( const QString & _plugin ) :
 			? ConfigManager::inst()->vstEmbedMethod()
 			: "headless" ),
 	m_version( 0 ),
-	m_currentProgram()
+	m_currentProgram(),
+	m_latency(0)
 {
 	setSplittedChannels( true );
 
@@ -516,6 +517,8 @@ bool VstPlugin::processMessage( const message & _m )
 			}
 			break;
 		}
+		case IdVstLatency:
+			setLatency(_m.getInt(0));
 		default:
 			return RemotePlugin::processMessage( _m );
 	}

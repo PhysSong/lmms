@@ -309,6 +309,14 @@ public:
 	// has to be called as soon as input- or output-count changes
 	int updateInOutCount();
 
+	// called on latency change, returns true on change
+	void updateLatency(bool reply = false);
+
+	inline int cachedLatency() const
+	{
+		return m_latency;
+	}
+
 	inline void lockShm()
 	{
 		m_shmLock.lock();
@@ -481,6 +489,7 @@ private:
 	bpm_t m_bpm;
 	double m_currentSamplePos;
 	int m_currentProgram;
+	int m_latency;
 
 	//! Host to plugin synchronisation data structure
 	struct Sync
@@ -719,6 +728,10 @@ bool RemoteVstPlugin::processMessage( const message & _m )
 			break;
 		}
 #endif
+		case IdVstGetLatency:
+			updateLatency(true);
+			break;
+
 		default:
 			return RemotePluginClient::processMessage( _m );
 	}
@@ -739,6 +752,7 @@ void RemoteVstPlugin::init( const std::string & _plugin_file )
 	updateInOutCount();
 	updateBufferSize();
 	updateSampleRate();
+	updateLatency(true);
 
 	/* set program to zero */
 	/* i comment this out because it breaks dfx Geometer
@@ -1117,6 +1131,7 @@ void RemoteVstPlugin::process( const SampleFrame* _in, SampleFrame* _out )
 #else
 	m_plugin->processReplacing(m_plugin, m_inputs, m_outputs, bufferSize());
 #endif
+	updateLatency();
 
 	unlockShm();
 
@@ -1794,6 +1809,22 @@ int RemoteVstPlugin::updateInOutCount()
 
 
 
+
+void RemoteVstPlugin::updateLatency(bool reply)
+{
+	if (m_latency != m_plugin->initialDelay)
+	{
+		reply = true;
+	}
+	m_latency = m_plugin->initialDelay;
+	if (reply)
+	{
+		sendMessage(message(IdVstLatency).addInt(m_latency));
+	}
+}
+
+
+
 //#define DEBUG_CALLBACKS
 #ifdef DEBUG_CALLBACKS
 #define SHOW_CALLBACK __plugin->debugMessage
@@ -1939,6 +1970,7 @@ intptr_t RemoteVstPlugin::hostCallback( AEffect * _effect, int32_t _opcode,
 		case audioMasterIOChanged:
 			SHOW_CALLBACK( "amc: audioMasterIOChanged\n" );
 			// numInputs, numOutputs, and/or latency has changed
+			__plugin->updateLatency();
 			return __plugin->updateInOutCount();
 
 #ifdef OLD_VST_SDK

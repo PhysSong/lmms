@@ -124,6 +124,25 @@ public:
 
 	QString embedMethod() const;
 
+	inline int latency() const
+	{
+		return m_latency;
+	}
+
+	void setLatency(int latency)
+	{
+		if (m_latency != latency)
+		{
+			m_latency = latency;
+			emit latencyChanged();
+		}
+	}
+
+	void updateLatency();
+
+signals:
+	void latencyChanged();
+
 public slots:
 	void setTempo( lmms::bpm_t _bpm );
 	void updateSampleRate();
@@ -174,6 +193,7 @@ private:
 
 	QTimer m_idleTimer;
 
+	int m_latency;
 } ;
 
 namespace gui {

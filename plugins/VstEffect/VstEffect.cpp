@@ -126,6 +126,10 @@ bool VstEffect::openPlugin(const QString& plugin)
 		return false;
 	}
 
+	connect(m_plugin.data(), &VstPlugin::latencyChanged, [this]() {
+		setLatency(m_plugin->latency());
+	});
+
 	delete tf;
 
 	m_key.attributes["file"] = plugin;
