@@ -27,6 +27,8 @@
 #define LMMS_INSTRUMENT_TRACK_H
 
 #include "AudioPort.h"
+#include "EffectChain.h"
+#include "Instrument.h"
 #include "InstrumentFunctions.h"
 #include "InstrumentSoundShaping.h"
 #include "Microtuner.h"
@@ -148,6 +150,11 @@ public:
 		return &m_audioPort;
 	}
 
+	const AudioPort * audioPort() const
+	{
+		return &m_audioPort;
+	}
+
 	MidiPort * midiPort()
 	{
 		return &m_midiPort;
@@ -238,6 +245,12 @@ public:
 	void replaceInstrument(DataFile dataFile);
 
 	void autoAssignMidiDevice( bool );
+
+	int latency() const override
+	{
+		return (instrument() ? instrument()->latency() : 0)
+			+ audioPort()->effects()->totalLatency();
+	}
 
 signals:
 	void instrumentChanged();

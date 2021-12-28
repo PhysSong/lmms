@@ -50,7 +50,8 @@ Effect::Effect( const Plugin::Descriptor * _desc,
 	m_wetDryModel( 1.0f, -1.0f, 1.0f, 0.01f, this, tr( "Wet/Dry mix" ) ),
 	m_gateModel( 0.0f, 0.0f, 1.0f, 0.01f, this, tr( "Gate" ) ),
 	m_autoQuitModel( 1.0f, 1.0f, 8000.0f, 100.0f, 1.0f, this, tr( "Decay" ) ),
-	m_autoQuitDisabled( false )
+	m_autoQuitDisabled( false ),
+	m_latency(0)
 {
 	m_wetDryModel.setCenterValue(0);
 

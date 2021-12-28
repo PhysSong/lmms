@@ -243,5 +243,14 @@ void EffectChain::clear()
 	m_enabledModel.setValue( false );
 }
 
+int EffectChain::totalLatency() const
+{
+	int latency = 0;
+	for (Effect* e: m_effects)
+	{
+		latency += e->latency();
+	}
+	return latency;
+}
 
 } // namespace lmms

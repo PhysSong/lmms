@@ -172,6 +172,25 @@ public:
 				Model * _parent,
 				Descriptor::SubPluginFeatures::Key * _key );
 
+	inline int latency() const
+	{
+		return m_latency;
+	}
+
+	void setLatency(int latency)
+	{
+		if (m_latency != latency)
+		{
+			m_latency = latency;
+			emit latencyChanged();
+		}
+	}
+
+	void updateLatency();
+
+signals:
+	void latencyChanged();
+
 
 protected:
 	/**
@@ -229,6 +248,8 @@ private:
 	TempoSyncKnobModel m_autoQuitModel;
 	
 	bool m_autoQuitDisabled;
+
+	int m_latency;
 
 	SRC_DATA m_srcData[2];
 	SRC_STATE * m_srcState[2];

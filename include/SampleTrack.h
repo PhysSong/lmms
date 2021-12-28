@@ -26,6 +26,7 @@
 #define LMMS_SAMPLE_TRACK_H
 
 #include "AudioPort.h"
+#include "EffectChain.h"
 #include "Track.h"
 
 
@@ -68,6 +69,11 @@ public:
 		return &m_audioPort;
 	}
 
+	inline const AudioPort * audioPort() const
+	{
+		return &m_audioPort;
+	}
+
 	QString nodeName() const override
 	{
 		return "sampletrack";
@@ -84,6 +90,10 @@ public:
 		m_isPlaying = playing;
 	}
 
+	int latency() const override
+	{
+		return audioPort()->effects()->totalLatency();
+	}
 signals:
 	void playingChanged();
 

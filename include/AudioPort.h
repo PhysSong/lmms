@@ -83,6 +83,11 @@ public:
 		return m_effects.get();
 	}
 
+	inline const EffectChain * effects() const
+	{
+		return m_effects.get();
+	}
+
 	void setNextMixerChannel( const mix_ch_t _chnl )
 	{
 		m_nextMixerChannel = _chnl;
