@@ -50,6 +50,7 @@ class SampleFrame;
 
 class LMMS_EXPORT Instrument : public Plugin
 {
+	Q_OBJECT
 public:
 	enum class Flag
 	{
@@ -158,6 +159,25 @@ public:
 		return m_instrumentTrack;
 	}
 
+	inline int latency() const
+	{
+		return m_latency;
+	}
+
+	void setLatency(int latency)
+	{
+		if (m_latency != latency)
+		{
+			m_latency = latency;
+			emit latencyChanged();
+		}
+	}
+
+	void updateLatency();
+
+signals:
+	void latencyChanged();
+
 
 protected:
 	// fade in to prevent clicks
@@ -172,6 +192,8 @@ protected:
 
 
 private:
+	int m_latency;
+
 	InstrumentTrack * m_instrumentTrack;
 	Flags m_flags;
 };

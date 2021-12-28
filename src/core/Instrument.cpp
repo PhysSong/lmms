@@ -40,6 +40,7 @@ Instrument::Instrument(InstrumentTrack * _instrument_track,
 			const Descriptor::SubPluginFeatures::Key *key,
 			Flags flags) :
 	Plugin(_descriptor, nullptr/* _instrument_track*/, key),
+	m_latency(0),
 	m_instrumentTrack( _instrument_track ),
 	m_flags(flags)
 {

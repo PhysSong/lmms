@@ -26,6 +26,7 @@
 #define LMMS_SAMPLE_TRACK_H
 
 #include "AudioBusHandle.h"
+#include "EffectChain.h"
 #include "Track.h"
 
 
@@ -83,6 +84,10 @@ public:
 		m_isPlaying = playing;
 	}
 
+	int latency() const override
+	{
+		return audioBusHandle()->effects()->totalLatency();
+	}
 signals:
 	void playingChanged();
 

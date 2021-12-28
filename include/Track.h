@@ -197,6 +197,11 @@ public:
 	
 	BoolModel* getMutedModel();
 
+	virtual int latency() const
+	{
+		return 0;
+	}
+
 public slots:
 	virtual void setName(const QString& newName);
 

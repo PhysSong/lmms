@@ -28,6 +28,8 @@
 
 
 #include "AudioBusHandle.h"
+#include "EffectChain.h"
+#include "Instrument.h"
 #include "InstrumentFunctions.h"
 #include "InstrumentSoundShaping.h"
 #include "Microtuner.h"
@@ -238,6 +240,12 @@ public:
 	void replaceInstrument(DataFile dataFile);
 
 	void autoAssignMidiDevice( bool );
+
+	int latency() const override
+	{
+		return (instrument() ? instrument()->latency() : 0)
+			+ audioBusHandle()->effects()->totalLatency();
+	}
 
 signals:
 	void instrumentChanged();

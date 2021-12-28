@@ -67,6 +67,7 @@ public:
 
 	void clear();
 
+	int totalLatency() const;
 
 private:
 	using EffectList = std::vector<Effect*>;

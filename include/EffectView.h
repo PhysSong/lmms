@@ -96,6 +96,9 @@ private:
 	bool m_dragging;
 	QGraphicsOpacityEffect* m_opacityEffect;
 
+private slots:
+	void updateToolTip();
+
 } ;
 
 

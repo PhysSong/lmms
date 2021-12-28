@@ -141,6 +141,25 @@ public:
 				Model * _parent,
 				Descriptor::SubPluginFeatures::Key * _key );
 
+	inline int latency() const
+	{
+		return m_latency;
+	}
+
+	void setLatency(int latency)
+	{
+		if (m_latency != latency)
+		{
+			m_latency = latency;
+			emit latencyChanged();
+		}
+	}
+
+	void updateLatency();
+
+signals:
+	void latencyChanged();
+
 
 protected:
 	enum class ProcessStatus
@@ -204,6 +223,8 @@ private:
 	BoolModel m_enabledModel;
 	FloatModel m_wetDryModel;
 	TempoSyncKnobModel m_autoQuitModel;
+
+	int m_latency;
 
 	bool m_autoQuitEnabled = false;
 
