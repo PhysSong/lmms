@@ -374,6 +374,10 @@ void VestigeInstrument::loadFile( const QString & _file )
 		return;
 	}
 
+	connect(m_plugin, &VstPlugin::latencyChanged, [this]() {
+		setLatency(m_plugin->latency());
+	});
+
 	if ( !(instrumentTrack() != nullptr && instrumentTrack()->isPreviewMode()))
 	{
 		m_plugin->createUI(nullptr);

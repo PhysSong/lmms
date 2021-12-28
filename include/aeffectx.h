@@ -238,13 +238,13 @@ public:
 	int32_t numOutputs;
 	// flags 24-27
 	int32_t flags;
-	// Fill somewhere 28-2b
+	// Fill somewhere 28-2b 2c-2f
 	void *ptr1;
 	void *ptr2;
-	// 2c-2f
-	int latency;
-	// Zeroes 30-33 34-37
-	char empty3[4 + 4];
+	// latency(initial delay) 30-33
+	int initialDelay;
+	// Zeroes 34-37 38-3b
+	char empty2[4 + 4];
 	// 1.0f 3c-3f
 	float unknown_float;
 	// An object? pointer 40-43

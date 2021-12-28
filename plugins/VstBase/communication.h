@@ -71,6 +71,7 @@ enum VstRemoteMessageIDs
 	IdVstIdleUpdate,
 	IdVstParameterDisplays,
 	IdVstParameterLabels,
+	IdVstGetLatency,
 
 	// remoteVstPlugin -> vstPlugin
 	IdVstFailedLoadingPlugin,
@@ -84,7 +85,8 @@ enum VstRemoteMessageIDs
 	IdVstPluginUniqueID,
 	IdVstSetParameter,
 	IdVstParameterCount,
-	IdVstParameterDump
+	IdVstParameterDump,
+	IdVstLatency
 
 } ;
 
