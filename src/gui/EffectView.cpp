@@ -85,6 +85,7 @@ EffectView::EffectView( Effect * _model, QWidget * _parent ) :
 
 
 	setModel( _model );
+	updateToolTip();
 
 	if( effect()->controls()->controlCount() > 0 )
 	{
@@ -270,6 +271,10 @@ void EffectView::paintEvent( QPaintEvent * )
 }
 
 
+void EffectView::updateToolTip()
+{
+	setToolTip(tr("Latency: %1 samples").arg(effect() ? effect()->latency() : 0));
+}
 
 
 void EffectView::modelChanged()
@@ -278,6 +283,8 @@ void EffectView::modelChanged()
 	m_wetDry->setModel( &effect()->m_wetDryModel );
 	m_autoQuit->setModel( &effect()->m_autoQuitModel );
 	m_gate->setModel( &effect()->m_gateModel );
+	disconnect(nullptr, SIGNAL(latencyChanged()), this, SLOT(updateToolTip()));
+	connect(effect(), SIGNAL(latencyChanged()), this, SLOT(updateToolTip()));
 }
 
 } // namespace lmms::gui
