@@ -33,6 +33,11 @@
 #include <QPainter>
 
 
+// TODO remove this macro definition once we require libsndfile 1.1.0
+#ifdef LMMS_BUILD_WIN32
+#include <windows.h>
+#define ENABLE_SNDFILE_WINDOWS_PROTOTYPES 1
+#endif
 #include <sndfile.h>
 
 #define OV_EXCLUDE_STATIC_CALLBACKS
@@ -60,6 +65,20 @@
 #include "PathUtil.h"
 
 #include "FileDialog.h"
+
+
+namespace
+{
+// helper function for opening SNDFILE with QString
+SNDFILE* sf_qstring_open(const QString& path, int mode, SF_INFO* sfinfo)
+{
+#ifdef LMMS_BUILD_WIN32
+	return sf_wchar_open(path.toStdWString().data(), mode, sfinfo);
+#else
+	return sf_open(path.toLocal8Bit().constData(), mode, sfinfo);
+#endif
+}
+}
 
 
 SampleBuffer::SampleBuffer() :
@@ -276,11 +295,10 @@ void SampleBuffer::update(bool keepSettings)
 		else
 		{
 			// Use QFile to handle unicode file names on Windows
-			QFile f(file);
 			SNDFILE * sndFile;
 			SF_INFO sfInfo;
 			sfInfo.format = 0;
-			if (f.open(QIODevice::ReadOnly) && (sndFile = sf_open_fd(f.handle(), SFM_READ, &sfInfo, false)))
+			if ((sndFile = sf_qstring_open(file, SFM_READ, &sfInfo)))
 			{
 				f_cnt_t frames = sfInfo.frames;
 				int rate = sfInfo.samplerate;
@@ -290,7 +308,6 @@ void SampleBuffer::update(bool keepSettings)
 				}
 				sf_close(sndFile);
 			}
-			f.close();
 		}
 
 		if (!fileLoadError)
@@ -480,8 +497,7 @@ f_cnt_t SampleBuffer::decodeSampleSF(
 
 
 	// Use QFile to handle unicode file names on Windows
-	QFile f(fileName);
-	if (f.open(QIODevice::ReadOnly) && (sndFile = sf_open_fd(f.handle(), SFM_READ, &sfInfo, false)))
+	if ((sndFile = sf_qstring_open(fileName, SFM_READ, &sfInfo)))
 	{
 		frames = sfInfo.frames;
 
@@ -507,7 +523,6 @@ f_cnt_t SampleBuffer::decodeSampleSF(
 				"sample %s: %s", fileName, sf_strerror(nullptr));
 #endif
 	}
-	f.close();
 
 	//write down either directly or convert i->f depending on file type
 
