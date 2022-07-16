@@ -4,8 +4,8 @@ include(ImportedTargetHelpers)
 find_package_config_mode_with_fallback(unofficial-libstk unofficial::libstk::libstk
 	LIBRARY_NAMES "stk"
 	INCLUDE_NAMES "stk/Stk.h"
-	LIBRARY_HINTS "/usr/lib" "/usr/local/lib" "${CMAKE_INSTALL_PREFIX}/lib" "${CMAKE_FIND_ROOT_PATH}/lib"
-	INCLUDE_HINTS "/usr/include" "/usr/local/include" "${CMAKE_INSTALL_PREFIX}/include" "${CMAKE_FIND_ROOT_PATH}/include"
+	LIBRARY_HINTS "/usr/local/lib" "/usr/lib" "${CMAKE_INSTALL_PREFIX}/lib" "${CMAKE_FIND_ROOT_PATH}/lib"
+	INCLUDE_HINTS "/usr/local/include" "/usr/include" "${CMAKE_INSTALL_PREFIX}/include" "${CMAKE_FIND_ROOT_PATH}/include"
 	PREFIX STK
 )
 
