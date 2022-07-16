@@ -241,8 +241,10 @@ public:
 	// Fill somewhere 28-2b
 	void *ptr1;
 	void *ptr2;
-	// Zeroes 2c-2f 30-33 34-37 38-3b
-	char empty3[4 + 4 + 4];
+	// 2c-2f
+	int latency;
+	// Zeroes 30-33 34-37
+	char empty3[4 + 4];
 	// 1.0f 3c-3f
 	float unknown_float;
 	// An object? pointer 40-43
