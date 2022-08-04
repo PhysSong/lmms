@@ -1,6 +1,9 @@
 SET(PLUGIN_FILES "")
 IF(LMMS_BUILD_WIN32)
 	INSTALL(FILES $<TARGET_FILE:Qt5::QWindowsIntegrationPlugin> DESTINATION platforms)
+	if(TARGET Qt5::QWindowsVistaStylePlugin)
+		install(FILES $<TARGET_FILE:Qt5::QWindowsVistaStylePlugin> DESTINATION styles)
+	endif()
 ENDIF()
 
 IF(LMMS_BUILD_WIN32 OR LMMS_INSTALL_DEPENDENCIES)
