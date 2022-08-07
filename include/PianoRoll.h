@@ -29,7 +29,6 @@
 
 #include <QVector>
 #include <QWidget>
-#include <QInputDialog>
 
 #include "Editor.h"
 #include "ComboBoxModel.h"
@@ -37,21 +36,33 @@
 #include "Note.h"
 #include "lmms_basics.h"
 #include "Song.h"
-#include "ToolTip.h"
 #include "StepRecorder.h"
 #include "StepRecorderWidget.h"
-#include "PositionLine.h"
 
 class QPainter;
 class QPixmap;
+class QPushButton;
 class QScrollBar;
 class QString;
 class QMenu;
+class QToolButton;
+
+namespace lmms
+{
+
+
+class NotePlayHandle;
+class MidiClip;
+
+
+namespace gui
+{
 
 class ComboBox;
-class NotePlayHandle;
-class Pattern;
+class PositionLine;
+class TextFloat;
 class TimeLineWidget;
+
 
 class PianoRoll : public QWidget
 {
@@ -70,6 +81,7 @@ class PianoRoll : public QWidget
 	Q_PROPERTY(QColor textColorLight MEMBER m_textColorLight)
 	Q_PROPERTY(QColor textShadow MEMBER m_textShadow)
 	Q_PROPERTY(QColor markedSemitoneColor MEMBER m_markedSemitoneColor)
+	Q_PROPERTY(QColor knifeCutLine MEMBER m_knifeCutLineColor)
 	Q_PROPERTY(int noteOpacity MEMBER m_noteOpacity)
 	Q_PROPERTY(bool noteBorders MEMBER m_noteBorders)
 	Q_PROPERTY(int ghostNoteOpacity MEMBER m_ghostNoteOpacity)
@@ -84,10 +96,12 @@ class PianoRoll : public QWidget
 	Q_PROPERTY(QColor whiteKeyActiveTextColor MEMBER m_whiteKeyActiveTextColor)
 	Q_PROPERTY(QColor whiteKeyActiveTextShadow MEMBER m_whiteKeyActiveTextShadow)
 	Q_PROPERTY(QBrush whiteKeyActiveBackground MEMBER m_whiteKeyActiveBackground)
+	Q_PROPERTY(QBrush whiteKeyDisabledBackground MEMBER m_whiteKeyDisabledBackground)
 	/* black key properties */
 	Q_PROPERTY(int blackKeyWidth MEMBER m_blackKeyWidth)
 	Q_PROPERTY(QBrush blackKeyInactiveBackground MEMBER m_blackKeyInactiveBackground)
 	Q_PROPERTY(QBrush blackKeyActiveBackground MEMBER m_blackKeyActiveBackground)
+	Q_PROPERTY(QBrush blackKeyDisabledBackground MEMBER m_blackKeyDisabledBackground)
 public:
 	enum EditModes
 	{
@@ -95,6 +109,7 @@ public:
 		ModeErase,
 		ModeSelect,
 		ModeEditDetuning,
+		ModeEditKnife
 	};
 
 	/*! \brief Resets settings to default when e.g. creating a new project */
@@ -105,8 +120,8 @@ public:
 	void showVolTextFloat(volume_t vol, const QPoint &pos, int timeout=-1);
 	void showPanTextFloat(panning_t pan, const QPoint &pos, int timeout=-1);
 
-	void setCurrentPattern( Pattern* newPattern );
-	void setGhostPattern( Pattern* newPattern );
+	void setCurrentMidiClip( MidiClip* newMidiClip );
+	void setGhostMidiClip( MidiClip* newMidiClip );
 	void loadGhostNotes( const QDomElement & de );
 	void loadMarkedSemiTones(const QDomElement & de);
 
@@ -125,14 +140,14 @@ public:
 		return m_stepRecorder.isRecording();
 	}
 
-	const Pattern* currentPattern() const
+	const MidiClip* currentMidiClip() const
 	{
-		return m_pattern;
+		return m_midiClip;
 	}
 
-	bool hasValidPattern() const
+	bool hasValidMidiClip() const
 	{
-		return m_pattern != NULL;
+		return m_midiClip != nullptr;
 	}
 
 	Song::PlayModes desiredPlayModeForAccompany() const;
@@ -140,6 +155,13 @@ public:
 	int quantization() const;
 
 protected:
+	enum QuantizeActions
+	{
+		QuantizeBoth,
+		QuantizePos,
+		QuantizeLength
+	};
+
 	void keyPressEvent( QKeyEvent * ke ) override;
 	void keyReleaseEvent( QKeyEvent * ke ) override;
 	void leaveEvent( QEvent * e ) override;
@@ -174,8 +196,8 @@ protected slots:
 	bool toggleStepRecording();
 	void stop();
 
-	void startRecordNote( const Note & n );
-	void finishRecordNote( const Note & n );
+	void startRecordNote( const lmms::Note & n );
+	void finishRecordNote( const lmms::Note & n );
 
 	void horScrolled( int new_pos );
 	void verScrolled( int new_pos );
@@ -187,33 +209,37 @@ protected slots:
 	void pasteNotes();
 	bool deleteSelectedNotes();
 
-	void updatePosition(const TimePos & t );
-	void updatePositionAccompany(const TimePos & t );
-	void updatePositionStepRecording(const TimePos & t );
+	void updatePosition(const lmms::TimePos & t );
+	void updatePositionAccompany(const lmms::TimePos & t );
+	void updatePositionStepRecording(const lmms::TimePos & t );
 
 	void zoomingChanged();
 	void zoomingYChanged();
 	void quantizeChanged();
 	void noteLengthChanged();
 	void keyChanged();
-	void quantizeNotes();
+	void quantizeNotes(lmms::gui::PianoRoll::QuantizeActions mode = QuantizeBoth);
 
 	void updateSemiToneMarkerMenu();
 
 	void changeNoteEditMode( int i );
 	void markSemiTone(int i, bool fromMenu = true);
 
-	void hidePattern( Pattern* pattern );
+	void hideMidiClip( lmms::MidiClip* clip );
 
 	void selectRegionFromPixels( int xStart, int xEnd );
 
-	void clearGhostPattern();
+	void clearGhostClip();
 	void glueNotes();
+	void fitNoteLengths(bool fill);
+	void constrainNoteLengths(bool constrainMax);
+
+	void changeSnapMode();
 
 
 signals:
-	void currentPatternChanged();
-	void ghostPatternSet(bool);
+	void currentMidiClipChanged();
+	void ghostClipSet(bool);
 	void semiToneMarkerMenuScaleSetEnabled(bool);
 	void semiToneMarkerMenuChordSetEnabled(bool);
 
@@ -226,7 +252,8 @@ private:
 		ActionResizeNote,
 		ActionSelectNotes,
 		ActionChangeNoteProperty,
-		ActionResizeNoteEditArea
+		ActionResizeNoteEditArea,
+		ActionKnife
 	};
 
 	enum NoteEditMode
@@ -253,6 +280,13 @@ private:
 		PR_BLACK_KEY
 	};
 
+	enum GridMode
+	{
+		gridNudge,
+		gridSnap
+	//	gridFree
+	};
+
 	PositionLine * m_positionLine;
 
 	QVector<QString> m_nemStr; // gui names of each edit mode
@@ -264,7 +298,7 @@ private:
 
 	PianoRoll();
 	PianoRoll( const PianoRoll & );
-	virtual ~PianoRoll();
+	~PianoRoll() override = default;
 
 	void autoScroll(const TimePos & t );
 
@@ -282,6 +316,9 @@ private:
 	void playChordNotes(int key, int velocity=-1);
 	void pauseChordNotes(int key);
 
+	void setKnifeAction();
+	void cancelKnifeAction();
+
 	void updateScrollbars();
 	void updatePositionLineHeight();
 
@@ -294,7 +331,7 @@ private:
 	int noteEditRight() const;
 	int noteEditLeft() const;
 
-	void dragNotes( int x, int y, bool alt, bool shift, bool ctrl );
+	void dragNotes(int x, int y, bool alt, bool shift, bool ctrl);
 
 	static const int cm_scrollAmtHoriz = 10;
 	static const int cm_scrollAmtVert = 1;
@@ -304,6 +341,7 @@ private:
 	static QPixmap * s_toolSelect;
 	static QPixmap * s_toolMove;
 	static QPixmap * s_toolOpen;
+	static QPixmap* s_toolKnife;
 
 	static PianoRollKeyTypes prKeyOrder[];
 
@@ -316,11 +354,12 @@ private:
 	ComboBoxModel m_keyModel;
 	ComboBoxModel m_scaleModel;
 	ComboBoxModel m_chordModel;
+	ComboBoxModel m_snapModel;
 
-	static const QVector<double> m_zoomLevels;
-	static const QVector<double> m_zoomYLevels;
+	static const QVector<float> m_zoomLevels;
+	static const QVector<float> m_zoomYLevels;
 
-	Pattern* m_pattern;
+	MidiClip* m_midiClip;
 	NoteVector m_ghostNotes;
 
 	inline const NoteVector & ghostNotes() const
@@ -338,6 +377,7 @@ private:
 	Note * m_currentNote;
 	Actions m_action;
 	NoteEditMode m_noteEditMode;
+	GridMode m_gridMode;
 
 	int m_selectStartTick;
 	int m_selectedTick;
@@ -370,7 +410,6 @@ private:
 	int m_pianoKeysVisible;
 
 	int m_keyLineHeight;
-	int m_octaveHeight;
 	int m_whiteKeySmallHeight;
 	int m_whiteKeyBigHeight;
 	int m_blackKeyHeight;
@@ -389,6 +428,7 @@ private:
 
 	EditModes m_editMode;
 	EditModes m_ctrlMode; // mode they were in before they hit ctrl
+	EditModes m_knifeMode; // mode they where in before entering knife mode
 
 	bool m_mouseDownRight; //true if right click is being held down
 
@@ -407,6 +447,10 @@ private:
 
 	// did we start a mouseclick with shift pressed
 	bool m_startedWithShift;
+
+	// Variable that holds the position in ticks for the knife action
+	int m_knifeTickPos;
+	void updateKnifePos(QMouseEvent* me);
 
 	friend class PianoRollWindow;
 
@@ -428,6 +472,7 @@ private:
 	QColor m_textColorLight;
 	QColor m_textShadow;
 	QColor m_markedSemitoneColor;
+	QColor m_knifeCutLineColor;
 	int m_noteOpacity;
 	int m_ghostNoteOpacity;
 	bool m_noteBorders;
@@ -441,13 +486,15 @@ private:
 	QColor m_whiteKeyInactiveTextColor;
 	QColor m_whiteKeyInactiveTextShadow;
 	QBrush m_whiteKeyInactiveBackground;
+	QBrush m_whiteKeyDisabledBackground;
 	/* black key properties */
 	int m_blackKeyWidth;
 	QBrush m_blackKeyActiveBackground;
 	QBrush m_blackKeyInactiveBackground;
+	QBrush m_blackKeyDisabledBackground;
 
 signals:
-	void positionChanged( const TimePos & );
+	void positionChanged( const lmms::TimePos & );
 } ;
 
 
@@ -459,9 +506,9 @@ class PianoRollWindow : public Editor, SerializingObject
 public:
 	PianoRollWindow();
 
-	const Pattern* currentPattern() const;
-	void setCurrentPattern( Pattern* pattern );
-	void setGhostPattern( Pattern* pattern );
+	const MidiClip* currentMidiClip() const;
+	void setCurrentMidiClip( MidiClip* clip );
+	void setGhostMidiClip( MidiClip* clip );
 
 	int quantization() const;
 
@@ -491,21 +538,24 @@ public:
 	bool hasFocus() const;
 
 signals:
-	void currentPatternChanged();
+	void currentMidiClipChanged();
 
 
 private slots:
-	void updateAfterPatternChange();
-	void ghostPatternSet( bool state );
+	void updateAfterMidiClipChange();
+	void ghostClipSet( bool state );
+	void exportMidiClip();
+	void importMidiClip();
 
 private:
-	void patternRenamed();
+	void clipRenamed();
 	void focusInEvent(QFocusEvent * event) override;
 	void stopStepRecording();
 	void updateStepRecordingIcon();
 
 	PianoRoll* m_editor;
 
+	QToolButton* m_fileToolsButton;
 	ComboBox * m_zoomingComboBox;
 	ComboBox * m_zoomingYComboBox;
 	ComboBox * m_quantizeComboBox;
@@ -513,9 +563,14 @@ private:
 	ComboBox * m_keyComboBox;
 	ComboBox * m_scaleComboBox;
 	ComboBox * m_chordComboBox;
+	ComboBox* m_snapComboBox;
 	QPushButton * m_clearGhostButton;
 
 };
 
+
+} // namespace gui
+
+} // namespace lmms
 
 #endif

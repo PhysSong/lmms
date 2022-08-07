@@ -27,22 +27,30 @@
 
 #include "lmms_export.h"
 
-#include <QtCore/QBasicTimer>
-#include <QtCore/QTimer>
-#include <QtCore/QList>
+#include <QBasicTimer>
+#include <QTimer>
+#include <QList>
 #include <QMainWindow>
 
 #include "ConfigManager.h"
-#include "SubWindow.h"
 
 class QAction;
 class QDomElement;
 class QGridLayout;
 class QMdiArea;
 
+namespace lmms
+{
+
 class ConfigManager;
+
+namespace gui
+{
+
 class PluginView;
+class SubWindow;
 class ToolButton;
+class GuiApplication;
 
 
 class LMMS_EXPORT MainWindow : public QMainWindow
@@ -137,6 +145,8 @@ public:
 	static void saveWidgetState( QWidget * _w, QDomElement & _de );
 	static void restoreWidgetState( QWidget * _w, const QDomElement & _de );
 
+	bool eventFilter(QObject* watched, QEvent* event) override;
+
 public slots:
 	void resetWindowTitle();
 
@@ -151,10 +161,11 @@ public slots:
 	void aboutLMMS();
 	void help();
 	void toggleAutomationEditorWin();
-	void toggleBBEditorWin( bool forceShow = false );
+	void togglePatternEditorWin(bool forceShow = false);
 	void toggleSongEditorWin();
 	void toggleProjectNotesWin();
-	void toggleFxMixerWin();
+	void toggleMicrotunerWin();
+	void toggleMixerWin();
 	void togglePianoRollWin();
 	void toggleControllerRack();
 	void toggleFullscreen();
@@ -181,7 +192,7 @@ protected:
 private:
 	MainWindow();
 	MainWindow( const MainWindow & );
-	virtual ~MainWindow();
+	~MainWindow() override;
 
 	void finalize();
 
@@ -233,7 +244,7 @@ private:
 private slots:
 	void browseHelp();
 	void showTool( QAction * _idx );
-	void updateViewMenu( void );
+	void updateViewMenu();
 	void updateConfig( QAction * _who );
 	void onToggleMetronome();
 	void onExportProject();
@@ -248,5 +259,10 @@ signals:
 	void initProgress(const QString &msg);
 
 } ;
+
+
+} // namespace gui
+
+} // namespace lmms
 
 #endif

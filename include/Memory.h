@@ -34,6 +34,10 @@
 #include "lmms_export.h"
 #include "NiftyCounter.h"
 
+namespace lmms
+{
+
+
 class LMMS_EXPORT MemoryManager
 {
 public:
@@ -59,8 +63,10 @@ class LMMS_EXPORT MmAllocator
 public:
 	MmAllocator() = default;
 	template< class U > MmAllocator( const MmAllocator<U>& other ) {}
-	typedef T value_type;
-	template<class U> struct rebind { typedef MmAllocator<U> other; };
+	using value_type = T;
+	template<class U>  struct rebind {
+		using other = MmAllocator<U>;
+	};
 
 
 	T* allocate( std::size_t n )
@@ -73,7 +79,7 @@ public:
 		MemoryManager::free( p );
 	}
 
-	typedef std::vector<T, MmAllocator<T> > vector;
+	using vector = std::vector<T, MmAllocator<T>>;
 };
 
 class _AlignedAllocator_Base
@@ -127,8 +133,21 @@ static void operator delete[] ( void * ptr )	\
 }
 
 // for use in cases where overriding new/delete isn't a possibility
-#define MM_ALLOC( type, count ) reinterpret_cast<type*>( MemoryManager::alloc( sizeof( type ) * count ) )
+template<typename T>
+T* MM_ALLOC(size_t count)
+{
+	return reinterpret_cast<T*>(
+		MemoryManager::alloc(sizeof(T) * count));
+}
+
 // and just for symmetry...
-#define MM_FREE( ptr ) MemoryManager::free( ptr )
+template<typename T>
+void MM_FREE(T* ptr)
+{
+	MemoryManager::free(ptr);
+}
+
+
+} // namespace lmms
 
 #endif

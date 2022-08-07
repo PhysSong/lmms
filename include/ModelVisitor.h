@@ -27,6 +27,10 @@
 
 #include "lmms_export.h"
 
+namespace lmms
+{
+
+
 class AutomatableModel;
 class BoolModel;
 class IntModel;
@@ -45,7 +49,7 @@ public:
 	virtual void visit(FloatModel& m);
 	virtual void visit(ComboBoxModel& m);
 	virtual void visit(TempoSyncKnobModel& m);
-	virtual ~ModelVisitor();
+	virtual ~ModelVisitor() = default;
 };
 
 class LMMS_EXPORT ConstModelVisitor
@@ -60,7 +64,10 @@ public:
 	virtual void visit(const FloatModel& m);
 	virtual void visit(const ComboBoxModel& m);
 	virtual void visit(const TempoSyncKnobModel& m);
-	virtual ~ConstModelVisitor();
+	virtual ~ConstModelVisitor() = default;
 };
+
+
+} // namespace lmms
 
 #endif // MODELVISITOR_H

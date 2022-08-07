@@ -1,6 +1,6 @@
 #include "QTestSuite.h"
 
-#include <QtTest/QTest>
+#include <QTest>
 
 #include <QDebug>
 
@@ -28,7 +28,7 @@ int runSuit(const QString& name, const QStringList& args)
 int main(int argc, char* argv[])
 {
 	auto app = new QCoreApplication(argc, argv);
-	Engine::init(true);
+	lmms::Engine::init(true);
 
 	int rc = 0;
 
@@ -49,6 +49,6 @@ int main(int argc, char* argv[])
 		qDebug() << "<<" << rc << "out of"<<numsuites<<"test suites failed.";
 	}
 
-	Engine::destroy();
+	lmms::Engine::destroy();
 	return rc;
 }

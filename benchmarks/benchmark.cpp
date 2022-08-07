@@ -14,6 +14,8 @@
 
 #include "NotePlayHandle.h"
 
+using namespace lmms;
+
 template<typename T>
 using LocklessQueue = cds::container::VyukovMPMCCycleQueue<T>;
 

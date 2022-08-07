@@ -24,15 +24,17 @@
  */
 
 
-#include <QLayout>
 #include <QLabel>
 
+#include "embed.h"
 #include "BitcrushControlDialog.h"
 #include "BitcrushControls.h"
-#include "embed.h"
-#include "ToolTip.h"
-#include "LedCheckbox.h"
+#include "LedCheckBox.h"
 #include "Knob.h"
+
+namespace lmms::gui
+{
+
 
 BitcrushControlDialog::BitcrushControlDialog( BitcrushControls * controls ) :
 	EffectControlDialog( controls )
@@ -75,19 +77,20 @@ BitcrushControlDialog::BitcrushControlDialog( BitcrushControls * controls ) :
 	outClip->move( 138, 76 );
 	outClip->setModel( & controls->m_outClip );
 	outClip->setLabel( tr( "CLIP" ) );
-	outClip->setHintText( tr( "Output clip:" ) , "%" );
+    outClip->setHintText( tr( "Output clip:" ) , " dBFS");
+
 	
 	
 	// leds
 	LedCheckBox * rateEnabled = new LedCheckBox( "", this, tr( "Rate enabled" ), LedCheckBox::Green );
 	rateEnabled->move( 64, 14 );
 	rateEnabled->setModel( & controls->m_rateEnabled );
-	ToolTip::add( rateEnabled, tr( "Enable sample-rate crushing" ) );
+	rateEnabled->setToolTip(tr("Enable sample-rate crushing"));
 	
 	LedCheckBox * depthEnabled = new LedCheckBox( "", this, tr( "Depth enabled" ), LedCheckBox::Green );
 	depthEnabled->move( 101, 14 );
 	depthEnabled->setModel( & controls->m_depthEnabled );
-	ToolTip::add( depthEnabled, tr( "Enable bit-depth crushing" ) );
+	depthEnabled->setToolTip(tr("Enable bit-depth crushing"));
 	
 	
 	// rate crushing knobs
@@ -111,3 +114,6 @@ BitcrushControlDialog::BitcrushControlDialog( BitcrushControls * controls ) :
 	levels->setLabel( tr( "QUANT" ) );
 	levels->setHintText( tr( "Levels:" ) , "" );
 }
+
+
+} // namespace lmms::gui
