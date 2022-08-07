@@ -1,5 +1,7 @@
 #include "QTestSuite.h"
 
+#include <stdexcept>
+
 #include <QTest>
 
 #include <QDebug>
