@@ -47,6 +47,8 @@ jobs:
         run: cmake --build build --target tests
       - name: Run tests
         run: build/tests/tests
+      - name: Build benchmarks
+        run: cmake --build build --target benchmarks
       - name: Package
         run: |
           cmake --build build --target install
@@ -109,6 +111,8 @@ jobs:
         run: cmake --build build --target tests
       - name: Run tests
         run: build/tests/tests
+      - name: Build benchmarks
+        run: cmake --build build --target benchmarks
       - name: Package
         run: |
           cmake --build build --target install
@@ -168,6 +172,8 @@ jobs:
         run: cmake --build build
       - name: Build tests
         run: cmake --build build --target tests
+      - name: Build benchmarks
+        run: cmake --build build --target benchmarks
       - name: Package
         run: cmake --build build --target package
       - name: Upload artifacts
@@ -241,6 +247,8 @@ jobs:
         run: cmake --build build
       - name: Build tests
         run: cmake --build build --target tests
+      - name: Build benchmarks
+        run: cmake --build build --target benchmarks
       - name: Package
         run: cmake --build build --target package
       - name: Upload artifacts
