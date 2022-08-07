@@ -47,6 +47,7 @@ ADD_GEN_QRC(LMMS_RCC_OUT lmms.qrc
 # Use libraries in non-standard directories (e.g., another version of Qt)
 IF(LMMS_BUILD_LINUX)
 	LINK_LIBRARIES(-Wl,--enable-new-dtags)
+	SET(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
 ENDIF()
 SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
