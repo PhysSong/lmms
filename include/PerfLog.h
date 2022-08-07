@@ -25,6 +25,8 @@
 #ifndef PERFLOG_H
 #define PERFLOG_H
 
+#include "lmms_export.h"
+
 #include <ctime>
 #include <QString>
 
@@ -36,7 +38,7 @@ namespace lmms
 ///
 /// Represents a point in CPU time (not wall-clock time) intended for measuring
 /// performance.
-class PerfTime
+class LMMS_EXPORT PerfTime
 {
 public:
 	PerfTime();
@@ -60,7 +62,7 @@ private:
 ///
 /// Measures time between construction and destruction and prints the result to
 /// stderr, along with \p name. Alternatively, call begin() and end() explicitly.
-class PerfLogTimer
+class LMMS_EXPORT PerfLogTimer
 {
  public:
 	PerfLogTimer(const QString& name);
