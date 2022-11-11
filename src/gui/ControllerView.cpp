@@ -56,7 +56,7 @@ namespace lmms::gui
 ControllerView::ControllerView(Controller * controller, QWidget * parent) :
 	QFrame(parent),
 	ModelView(controller, this),
-	m_controllerDlg(NULL),
+	m_controllerDlg(nullptr),
 	m_titleBarHeight(24),
 	m_show(true),
 	m_modelC(controller)
