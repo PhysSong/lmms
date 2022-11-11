@@ -81,9 +81,9 @@ public slots:
 	const QVector<ControllerView *> controllerViews() const;
 
 protected:
-	virtual void closeEvent(QCloseEvent * ce);
-	virtual void resizeEvent(QResizeEvent *);
-	virtual void paintEvent(QPaintEvent *);
+	void closeEvent(QCloseEvent * ce) override;
+	void resizeEvent(QResizeEvent *) override;
+	void paintEvent(QPaintEvent *) override;
 
 private slots:
 	void addLfoController();

@@ -85,9 +85,9 @@ signals:
 
 
 protected:
-	virtual void paintEvent(QPaintEvent *);
-	virtual void contextMenuEvent(QContextMenuEvent *);
-	virtual void modelChanged();
+	void paintEvent(QPaintEvent *) override;
+	void contextMenuEvent(QContextMenuEvent *) override;
+	void modelChanged() override;
 	void mouseDoubleClickEvent(QMouseEvent * me) override;
 	void dragEnterEvent(QDragEnterEvent * dee) override;
 	void dropEvent(QDropEvent * de) override;
