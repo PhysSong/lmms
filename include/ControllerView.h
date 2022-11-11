@@ -37,13 +37,19 @@
 class QLineEdit;
 class QPushButton;
 
+namespace lmms::gui
+{
+
+
+class LedCheckBox;
+
 
 class ControllerView : public QFrame, public ModelView
 {
 	Q_OBJECT
 public:
-	ControllerView(Controller * controller, QWidget * parent);
-	virtual ~ControllerView();
+	ControllerView( Controller * _controller, QWidget * _parent );
+	~ControllerView() override;
 
 	inline Controller * getController()
 	{
@@ -70,21 +76,21 @@ public slots:
 
 
 signals:
-	void deleteController(ControllerView * view);
+	void deleteController(lmms::gui::ControllerView * view);
 	void controllerCollapsed();
 	void collapseAll();
 	void expandAll();
-	void controllerMoveUp(ControllerView * view);
-	void controllerMoveDown(ControllerView * view);
+	void controllerMoveUp(lmms::gui::ControllerView * view);
+	void controllerMoveDown(lmms::gui::ControllerView * view);
 
 
 protected:
 	virtual void paintEvent(QPaintEvent *);
 	virtual void contextMenuEvent(QContextMenuEvent *);
 	virtual void modelChanged();
-	virtual void mouseDoubleClickEvent(QMouseEvent * me);
-	virtual void dragEnterEvent(QDragEnterEvent * dee);
-	virtual void dropEvent(QDropEvent * de);
+	void mouseDoubleClickEvent(QMouseEvent * me) override;
+	void dragEnterEvent(QDragEnterEvent * dee) override;
+	void dropEvent(QDropEvent * de) override;
 
 
 private:
@@ -96,5 +102,8 @@ private:
 	QPushButton * m_collapseButton;
 	Controller * m_modelC;
 };
+
+
+} // namespace lmms::gui
 
 #endif

@@ -23,7 +23,6 @@
  *
  */
 
-#include <QMessageBox>
 #include <QCloseEvent>
 #include <QLayout>
 
@@ -31,10 +30,14 @@
 #include "EffectControls.h"
 #include "GuiApplication.h"
 #include "MainWindow.h"
+#include "SubWindow.h"
+
+namespace lmms::gui
+{
 
 
 EffectControlDialog::EffectControlDialog( EffectControls * _controls ) :
-	QWidget( NULL ),
+	QWidget( nullptr ),
 	ModelView( _controls, this ),
 	m_effectControls( _controls ),
 	m_subWindow(nullptr)
@@ -46,15 +49,12 @@ EffectControlDialog::EffectControlDialog( EffectControls * _controls ) :
 
 
 
-EffectControlDialog::~EffectControlDialog()
-{
-}
 
 void EffectControlDialog::showDialog()
 {
 	if (!m_subWindow)
 	{
-		m_subWindow = gui->mainWindow()->addWindowedWidget(this);
+		m_subWindow = getGUI()->mainWindow()->addWindowedWidget(this);
 		if (isResizable())
 		{
 			m_subWindow->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
@@ -102,6 +102,4 @@ void EffectControlDialog::closeEvent( QCloseEvent * _ce )
 }
 
 
-
-
-
+} // namespace lmms::gui

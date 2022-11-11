@@ -38,8 +38,16 @@ class QPushButton;
 class QScrollArea;
 class QVBoxLayout;
 
-class ControllerView;
+
+namespace lmms
+{
+
 class Controller;
+
+namespace gui
+{
+
+class ControllerView;
 
 
 class LMMS_EXPORT ControllerRackView : public QWidget, public SerializingObject
@@ -47,12 +55,12 @@ class LMMS_EXPORT ControllerRackView : public QWidget, public SerializingObject
 	Q_OBJECT
 public:
 	ControllerRackView();
-	virtual ~ControllerRackView();
+	~ControllerRackView() override = default;
 
-	virtual void saveSettings(QDomDocument &, QDomElement & parent);
-	virtual void loadSettings(const QDomElement & _this);
+	void saveSettings( QDomDocument & _doc, QDomElement & _parent ) override;
+	void loadSettings( const QDomElement & _this ) override;
 
-	inline virtual QString nodeName() const
+	inline QString nodeName() const override
 	{
 		return "ControllerRackView";
 	}
@@ -63,11 +71,11 @@ public:
 	bool allCollapsed() const;
 
 public slots:
-	void deleteController(ControllerView * view);
+	void deleteController(lmms::gui::ControllerView * view);
 	void collapsingAll();
 	void expandAll();
-	void onControllerAdded(Controller *);
-	void onControllerRemoved(Controller *);
+	void onControllerAdded(lmms::Controller *);
+	void onControllerRemoved(lmms::Controller *);
 	void onControllerCollapsed();
 
 	const QVector<ControllerView *> controllerViews() const;
@@ -79,8 +87,8 @@ protected:
 
 private slots:
 	void addLfoController();
-	void moveControllerUp(ControllerView * cv);
-	void moveControllerDown(ControllerView * cv);
+	void moveControllerUp(lmms::gui::ControllerView * cv);
+	void moveControllerDown(lmms::gui::ControllerView * cv);
 
 private:
 	QVector<ControllerView *> m_controllerViews;
@@ -91,5 +99,9 @@ private:
 	QPushButton * m_addButton;
 	QMdiSubWindow * m_subWin;
 };
+
+} // namespace gui
+
+} // namespace lmms
 
 #endif

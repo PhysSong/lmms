@@ -24,14 +24,19 @@
  */
 
 
+#include <QLabel>
+#include <QPainter>
+#include <QIcon>
+
+#include "embed.h"
 
 #include "PeakController.h"
-
-#include <QPainter>
-
 #include "EffectControlDialog.h"
-#include "plugins/peak_controller_effect/peak_controller_effect.h"
-#include "plugins/peak_controller_effect/peak_controller_effect_control_dialog.cpp"
+#include "plugins/PeakControllerEffect/PeakControllerEffect.h"
+#include "plugins/PeakControllerEffect/PeakControllerEffectControlDialog.cpp"
+
+namespace lmms::gui
+{
 
 
 PeakControllerDialog::PeakControllerDialog( PeakController * _model, QWidget * _parent ) :
@@ -47,12 +52,6 @@ PeakControllerDialog::PeakControllerDialog( PeakController * _model, QWidget * _
 	setModel( _model );
 }
 
-
-
-
-PeakControllerDialog::~PeakControllerDialog()
-{
-}
 
 
 
@@ -85,3 +84,4 @@ void PeakControllerDialog::modelChanged()
 }
 
 
+} // namespace lmms::gui
