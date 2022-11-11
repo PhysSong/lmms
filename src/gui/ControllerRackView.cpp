@@ -273,7 +273,7 @@ void ControllerRackView::moveControllerDown(ControllerView *cv)
 
 
 
-const QVector<ControllerView *> ControllerRackView::controllerViews() const
+const QVector<ControllerView *>& ControllerRackView::controllerViews() const
 {
 	return m_controllerViews;
 }

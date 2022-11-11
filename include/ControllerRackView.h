@@ -78,7 +78,7 @@ public slots:
 	void onControllerRemoved(lmms::Controller *);
 	void onControllerCollapsed();
 
-	const QVector<ControllerView *> controllerViews() const;
+	const QVector<ControllerView *>& controllerViews() const;
 
 protected:
 	void closeEvent(QCloseEvent * ce) override;
