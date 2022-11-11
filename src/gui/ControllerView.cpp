@@ -87,7 +87,7 @@ ControllerView::ControllerView(Controller * controller, QWidget * parent) :
 	setFixedWidth(m_controllerDlg->width() + 2);
 	setFixedHeight(m_controllerDlg->height() + m_titleBarHeight + 1);
 
-	m_collapseButton = new QPushButton(embed::getIconPixmap("stepper-down"), QString::null, this );
+	m_collapseButton = new QPushButton(embed::getIconPixmap("stepper-down"), QString(), this );
 	m_collapseButton->resize(buttonsize);
 	m_collapseButton->setFocusPolicy(Qt::NoFocus);
 	m_collapseButton->setCursor(Qt::ArrowCursor);
