@@ -186,7 +186,11 @@ if(LMMS_HAVE_LIBRT)
 endif()
 
 # Support qt_version_tag in Qt 5.6
-TARGET_LINK_LIBRARIES(RemoteZynAddSubFx Qt5::Core)
+if(WANT_QT6)
+	target_link_libraries(RemoteZynAddSubFx Qt6::Core)
+else()
+	target_link_libraries(RemoteZynAddSubFx Qt5::Core)
+endif()
 
 # link Qt libraries when on win32
 IF(LMMS_BUILD_WIN32)

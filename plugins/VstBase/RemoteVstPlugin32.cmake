@@ -20,7 +20,7 @@ ELSEIF(LMMS_BUILD_WIN64 AND MSVC)
 	IF(NOT QT_32_PREFIX)
 		SET(LMMS_MSVC_YEAR_FOR_QT ${LMMS_MSVC_YEAR})
 
-		if(LMMS_MSVC_YEAR_FOR_QT EQUAL 2019 AND Qt5_VERSION VERSION_LESS "5.15")
+		if(NOT WANT_QT6 AND VERSION_LESS "5.15")
 			SET(LMMS_MSVC_YEAR_FOR_QT 2017) # Qt only provides binaries for MSVC 2017, but 2019 is binary compatible
 		endif()
 
@@ -28,10 +28,10 @@ ELSEIF(LMMS_BUILD_WIN64 AND MSVC)
 		SET(QT_32_PREFIX "${QT_BIN_DIR}/../../msvc${LMMS_MSVC_YEAR_FOR_QT}")
 	ENDIF()
 
-	#TODO: qt5 installed using vcpkg: I don't know how to detect if the user built the x86 version of qt5 from here. At least not cleanly.
+	#TODO: Qt installed using vcpkg: I don't know how to detect if the user built the x86 version of Qt from here. At least not cleanly.
 	#So for the moment, we'll allow the built.
 	IF(NOT (IS_DIRECTORY ${QT_32_PREFIX} AND EXISTS ${QT_32_PREFIX}/bin/qmake.exe))
-		MESSAGE(WARNING "No Qt 32 bit installation found at ${QT_32_PREFIX}. If you're using VCPKG you can ignore this message if you've built x86-windows version of qt5")
+		MESSAGE(WARNING "No Qt 32 bit installation found at ${QT_32_PREFIX}. If you're using VCPKG you can ignore this message if you've built x86-windows version of Qt")
 	ENDIF()
 
 	ExternalProject_Add(RemoteVstPlugin32

@@ -90,6 +90,7 @@ OPTION(WANT_VST_64	"Include 64-bit VST support" ON)
 OPTION(WANT_WINMM	"Include WinMM MIDI support" OFF)
 OPTION(WANT_DEBUG_FPE	"Debug floating point exceptions" OFF)
 OPTION(BUNDLE_QT_TRANSLATIONS	"Install Qt translation files for LMMS" OFF)
+OPTION(WANT_QT6	"Build with Qt 6" OFF)
 
 
 IF(LMMS_BUILD_APPLE)
@@ -159,23 +160,44 @@ check_library_exists(rt shm_open "" LMMS_HAVE_LIBRT)
 
 LIST(APPEND CMAKE_PREFIX_PATH "${CMAKE_INSTALL_PREFIX}")
 
-FIND_PACKAGE(Qt5 5.6.0 COMPONENTS Core Gui Widgets Xml REQUIRED)
-FIND_PACKAGE(Qt5 COMPONENTS LinguistTools QUIET)
+if(WANT_QT6)
+	find_package(Qt6 6.2.0 COMPONENTS Core Gui Widgets Xml REQUIRED)
+	find_package(Qt6 COMPONENTS LinguistTools QUIET)
 
-SET(QT_LIBRARIES
-	Qt5::Core
-	Qt5::Gui
-	Qt5::Widgets
-	Qt5::Xml
-)
+	set(QT_LIBRARIES
+		Qt6::Core
+		Qt6::Gui
+		Qt6::Widgets
+		Qt6::Xml
+	)
 
-IF(LMMS_BUILD_LINUX AND WANT_VST)
-    FIND_PACKAGE(Qt5 COMPONENTS X11Extras REQUIRED)
-    LIST(APPEND QT_LIBRARIES Qt5::X11Extras)
-ENDIF()
+	# Resolve Qt6::qmake to full path for use in packaging scripts
+	get_target_property(QT_QMAKE_EXECUTABLE Qt6::qmake IMPORTED_LOCATION)
 
-# Resolve Qt5::qmake to full path for use in packaging scripts
-GET_TARGET_PROPERTY(QT_QMAKE_EXECUTABLE "${Qt5Core_QMAKE_EXECUTABLE}" IMPORTED_LOCATION)
+	find_package(Qt6Test)
+	set(QT_QTTEST_LIBRARY Qt6::Test)
+else()
+	find_package(Qt5 5.6.0 COMPONENTS Core Gui Widgets Xml REQUIRED)
+	find_package(Qt5 COMPONENTS LinguistTools QUIET)
+
+	set(QT_LIBRARIES
+		Qt5::Core
+		Qt5::Gui
+		Qt5::Widgets
+		Qt5::Xml
+	)
+
+	if(LMMS_BUILD_LINUX AND WANT_VST)
+		find_package(Qt5 COMPONENTS X11Extras REQUIRED)
+		list(APPEND QT_LIBRARIES Qt5::X11Extras)
+	endif()
+
+	# Resolve Qt5::qmake to full path for use in packaging scripts
+	get_target_property(QT_QMAKE_EXECUTABLE "${Qt5Core_QMAKE_EXECUTABLE}" IMPORTED_LOCATION)
+
+	find_package(Qt5Test)
+	set(QT_QTTEST_LIBRARY Qt5::Test)
+endif()
 
 # Find the location of Qt translation files
 execute_process(COMMAND ${QT_QMAKE_EXECUTABLE} -query QT_INSTALL_TRANSLATIONS
@@ -187,9 +209,6 @@ IF(EXISTS "${QT_TRANSLATIONS_DIR}")
 	MESSAGE("-- Found Qt translations in ${QT_TRANSLATIONS_DIR}")
 	ADD_DEFINITIONS("-DQT_TRANSLATIONS_DIR=\"${QT_TRANSLATIONS_DIR}\"")
 ENDIF()
-
-FIND_PACKAGE(Qt5Test)
-SET(QT_QTTEST_LIBRARY Qt5::Test)
 
 # check for libsndfile
 FIND_PACKAGE(SndFile REQUIRED)

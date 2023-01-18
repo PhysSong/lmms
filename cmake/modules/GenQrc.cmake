@@ -56,9 +56,14 @@ function(add_gen_qrc RCC_OUT QRC_NAME)
 	# Additionally, `qt5_add_resources` adds unnecessary dependencies for
 	# generated QRC files, which can cause dependency cycles with some
 	# generators. See issue #6177.
+	if(WANT_QT6)
+		set(RCC Qt6::rcc)
+	else()
+		set(RCC Qt5::rcc)
+	endif()
 	add_custom_command(
 		OUTPUT "${CPP_FILE}"
-		COMMAND Qt5::rcc
+		COMMAND ${RCC}
 			--name "${RESOURCE_NAME}"
 			--output "${CPP_FILE}"
 			"${QRC_FILE}"

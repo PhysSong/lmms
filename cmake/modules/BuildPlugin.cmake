@@ -30,8 +30,13 @@ MACRO(BUILD_PLUGIN PLUGIN_NAME)
 		ADD_GEN_QRC(RCC_OUT "${PLUGIN_NAME}.qrc" PREFIX artwork/${PLUGIN_NAME} ${PLUGIN_EMBEDDED_RESOURCES})
 	ENDIF(ER_LEN)
 
-	QT5_WRAP_CPP(plugin_MOC_out ${PLUGIN_MOCFILES})
-	QT5_WRAP_UI(plugin_UIC_out ${PLUGIN_UICFILES})
+	if(WANT_QT6)
+		qt6_wrap_cpp(plugin_MOC_out ${PLUGIN_MOCFILES})
+		qt6_wrap_ui(plugin_UIC_out ${PLUGIN_UICFILES})
+	else()
+		qt5_wrap_cpp(plugin_MOC_out ${PLUGIN_MOCFILES})
+		qt5_wrap_ui(plugin_UIC_out ${PLUGIN_UICFILES})
+	endif()
 
 	FOREACH(f ${PLUGIN_SOURCES})
 		ADD_FILE_DEPENDENCIES(${f} ${RCC_OUT} ${plugin_UIC_out})
@@ -56,7 +61,11 @@ MACRO(BUILD_PLUGIN PLUGIN_NAME)
 
 	ADD_LIBRARY(${PLUGIN_NAME} ${PLUGIN_LINK} ${PLUGIN_SOURCES} ${plugin_MOC_out} ${RCC_OUT})
 
-	TARGET_LINK_LIBRARIES(${PLUGIN_NAME} Qt5::Widgets Qt5::Xml)
+	if(WANT_QT6)
+		target_link_libraries(${PLUGIN_NAME} Qt6::Widgets Qt6::Xml)
+	else()
+		target_link_libraries(${PLUGIN_NAME} Qt5::Widgets Qt5::Xml)
+	endif()
 
 	IF(LMMS_BUILD_WIN32)
 		TARGET_LINK_LIBRARIES(${PLUGIN_NAME} lmms)

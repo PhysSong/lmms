@@ -66,8 +66,13 @@ endif()
 
 
 if(WIN32)
-	find_package(Qt5Core REQUIRED)
-	target_link_libraries(${EXE_NAME} Qt5::Core)
+	if(WANT_QT6)
+		find_package(Qt6Core REQUIRED)
+		target_link_libraries(${EXE_NAME} Qt6::Core)
+	else()
+		find_package(Qt5Core REQUIRED)
+		target_link_libraries(${EXE_NAME} Qt5::Core)
+	endif()
 endif()
 
 if(IS_MINGW)
