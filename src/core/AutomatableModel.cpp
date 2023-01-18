@@ -24,6 +24,8 @@
 
 #include "AutomatableModel.h"
 
+#include <QRegularExpression>
+
 #include "lmms_math.h"
 
 #include "AudioEngine.h"
@@ -97,8 +99,8 @@ bool AutomatableModel::isAutomated() const
 
 bool AutomatableModel::mustQuoteName(const QString& name)
 {
-	QRegExp reg("^[A-Za-z0-9._-]+$");
-	return !reg.exactMatch(name);
+	auto reg = QRegularExpression("^[A-Za-z0-9._-]+$");
+	return !reg.match(name).hasMatch();
 }
 
 void AutomatableModel::saveSettings( QDomDocument& doc, QDomElement& element, const QString& name )
