@@ -34,7 +34,7 @@ find_package(SDL2 CONFIG QUIET)
 
 if(TARGET SDL2::SDL2)
 	# Extract details for find_package_handle_standard_args
-	get_target_property(SDL2_LIBRARY SDL2::SDL2 LOCATION)
+	get_target_property(SDL2_LIBRARY SDL2::SDL2 INTERFACE_LINK_LIBRARIES)
 	get_target_property(SDL2_INCLUDE_DIR SDL2::SDL2 INTERFACE_INCLUDE_DIRECTORIES)
 else()
 	set(SDL2_SEARCH_PATHS
