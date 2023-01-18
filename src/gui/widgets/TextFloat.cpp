@@ -131,7 +131,7 @@ TextFloat * TextFloat::displayMessage( const QString & _title,
 void TextFloat::paintEvent( QPaintEvent * _pe )
 {
 	QStyleOption opt;
-    opt.init( this );
+    opt.initFrom( this );
 	QPainter p( this );
 	p.fillRect( 0, 0, width(), height(), QColor( 0, 0, 0, 0 ) );
 
