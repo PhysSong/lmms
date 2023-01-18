@@ -27,9 +27,9 @@
 #include "ComboBox.h"
 
 #include <QApplication>
-#include <QDesktopWidget>
 #include <QMouseEvent>
 #include <QPainter>
+#include <QScreen>
 #include <QStyleOptionFrame>
 
 #include "CaptionMenu.h"
@@ -138,7 +138,7 @@ void ComboBox::mousePressEvent( QMouseEvent* event )
 			}
 
 			QPoint gpos = mapToGlobal( QPoint( 0, height() ) );
-			if( gpos.y() + m_menu.sizeHint().height() < qApp->desktop()->height() )
+			if( gpos.y() + m_menu.sizeHint().height() < qApp->primaryScreen()->geometry().height() )
 			{
 				m_menu.exec( gpos );
 			}

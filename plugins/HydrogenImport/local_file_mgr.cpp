@@ -4,7 +4,6 @@
 #include <QDomDocument>
 #include <QFile>
 #include <QLocale>
-#include <QTextCodec>
 
 #include "LocalFileMng.h"
 
@@ -197,10 +196,8 @@ QDomDocument LocalFileMng::openXmlDocument( const QString& filename )
 		return QDomDocument();
 
 	if( TinyXMLCompat ) {
-	    QString enc = QTextCodec::codecForLocale()->name();
-	    if( enc == QString("System") ) {
-		    enc = "UTF-8";
-	    }
+		// FIXME
+	    QString enc = "UTF-8";
 	    QByteArray line;
 	    QByteArray buf = QString("<?xml version='1.0' encoding='%1' ?>\n")
 		.arg( enc )

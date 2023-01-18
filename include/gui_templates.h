@@ -30,11 +30,32 @@
 
 #include <QApplication>
 #include <QFont>
+
+#if QT_VERSION < 0x060000
 #include <QDesktopWidget>
+#endif
+
 
 namespace lmms
 {
 
+#if QT_VERSION >= 0x060000
+
+ // FIXME
+template <int>
+inline QFont pointSize(QFont f)
+{
+	return f;
+}
+
+
+inline QFont pointSizeF(QFont f,  float)
+{
+	return f;
+}
+
+
+#else
 
 // return DPI-independent font-size - font with returned font-size has always
 // the same size in pixels
@@ -66,6 +87,7 @@ inline QFont pointSizeF( QFont _f, float SIZE )
 	return( _f );
 }
 
+#endif
 
 } // namespace lmms
 
