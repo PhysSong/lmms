@@ -142,7 +142,7 @@ int ControlLayout::count() const
 	return m_itemMap.size() - 1;
 }
 
-QMap<QString, QLayoutItem*>::const_iterator
+QMultiMap<QString, QLayoutItem*>::const_iterator
 ControlLayout::pairAt(int index) const
 {
 	if (index < 0) { return m_itemMap.cend(); }
@@ -152,7 +152,7 @@ ControlLayout::pairAt(int index) const
 		return item->widget()->objectName() == s_searchBarName;
 	};
 
-	QMap<QString, QLayoutItem*>::const_iterator itr = m_itemMap.cbegin();
+	auto itr = m_itemMap.cbegin();
 	for (; itr != m_itemMap.cend() && (index > 0 || skip(itr.value())); ++itr)
 	{
 		if(!skip(itr.value())) { index--; }
@@ -243,7 +243,11 @@ int ControlLayout::doLayout(const QRect &rect, bool testOnly) const
 	const QString filterText = m_searchBar->text();
 	bool first = true;
 
+#if QT_VERSION >= 0x060000
+	QMultiMapIterator<QString, QLayoutItem*> itr(m_itemMap);
+#else
 	QMapIterator<QString, QLayoutItem*> itr(m_itemMap);
+#endif
 	while (itr.hasNext())
 	{
 		itr.next();
