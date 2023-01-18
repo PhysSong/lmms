@@ -136,7 +136,7 @@ void EffectChain::removeEffect( Effect * _effect )
 {
 	Engine::audioEngine()->requestChangeInModel();
 
-	Effect ** found = std::find( m_effects.begin(), m_effects.end(), _effect );
+	auto found = std::find( m_effects.begin(), m_effects.end(), _effect );
 	if( found == m_effects.end() )
 	{
 		Engine::audioEngine()->doneChangeInModel();
