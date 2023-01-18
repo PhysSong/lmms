@@ -68,7 +68,11 @@ public:
 
 
 protected:
+#if QT_VERSION >= 0x060000
+	void enterEvent( QEnterEvent * _e ) override;
+#else
 	void enterEvent( QEvent * _e ) override;
+#endif
 	void leaveEvent( QEvent * _e ) override;
 	void mousePressEvent( QMouseEvent * _me ) override;
 	void paintEvent( QPaintEvent * _pe ) override;
