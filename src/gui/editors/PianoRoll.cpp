@@ -2479,13 +2479,13 @@ void PianoRoll::mouseMoveEvent( QMouseEvent * me )
 
 			if( me->buttons() & Qt::LeftButton )
 			{
-				vol = qBound<int>( MinVolume,
+				vol = qBound<int>( (int)MinVolume,
 								MinVolume +
 								( ( (float)noteEditBottom() ) - ( (float)me->y() ) ) /
 								( (float)( noteEditBottom() - noteEditTop() ) ) *
 								( MaxVolume - MinVolume ),
 											MaxVolume );
-				pan = qBound<int>( PanningLeft,
+				pan = qBound<int>( (int)PanningLeft,
 								PanningLeft +
 								( (float)( noteEditBottom() - me->y() ) ) /
 								( (float)( noteEditBottom() - noteEditTop() ) ) *
@@ -3809,7 +3809,7 @@ void PianoRoll::wheelEvent(QWheelEvent * we )
 			{
 				for ( Note * n : nv )
 				{
-					panning_t pan = qBound<int>( PanningLeft, n->getPanning() + step, PanningRight );
+					panning_t pan = qBound<int>( (int)PanningLeft, n->getPanning() + step, (int)PanningRight );
 					n->setPanning( pan );
 				}
 				bool allPansEqual = std::all_of( nv.begin(), nv.end(),
