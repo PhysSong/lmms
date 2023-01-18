@@ -88,6 +88,14 @@ static void operator delete ( void * ptr )		\
 static void operator delete[] ( void * ptr )	\
 {													\
 	MemoryManager::free( ptr );					\
+}													\
+static void* operator new(size_t, void* ptr)		\
+{													\
+	return ptr;										\
+}													\
+static void* operator new[](size_t, void* ptr)		\
+{													\
+	return ptr;										\
 }
 
 // for use in cases where overriding new/delete isn't a possibility
