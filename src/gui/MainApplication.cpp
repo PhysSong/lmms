@@ -86,35 +86,34 @@ bool MainApplication::event(QEvent* event)
 }
 
 #ifdef LMMS_BUILD_WIN32
-// This can be moved into nativeEventFilter once Qt4 support has been dropped
-bool MainApplication::winEventFilter(MSG* msg, long* result)
-{
-	switch(msg->message)
-	{
-		case WM_STYLECHANGING:
-			if(msg->wParam == GWL_EXSTYLE)
-			{
-				// Prevent plugins making the main window transparent
-				STYLESTRUCT * style = reinterpret_cast<STYLESTRUCT *>(msg->lParam);
-				if(!(style->styleOld & WS_EX_LAYERED))
-				{
-					style->styleNew &= ~WS_EX_LAYERED;
-				}
-				*result = 0;
-				return true;
-			}
-			return false;
-		default:
-			return false;
-	}
-}
-
-bool MainApplication::nativeEventFilter(const QByteArray& eventType,
-					void* message, long* result)
+bool MainApplication::nativeEventFilter(const QByteArray& eventType, void* message,
+#if QT_VERSION >= 0x060000
+					qintptr* result)
+#else
+					long* result)
+#endif
 {
 	if(eventType == "windows_generic_MSG")
 	{
-		return winEventFilter(static_cast<MSG *>(message), result);
+		auto msg = static_cast<MSG *>(message);
+		switch(msg->message)
+		{
+			case WM_STYLECHANGING:
+				if(msg->wParam == GWL_EXSTYLE)
+				{
+					// Prevent plugins making the main window transparent
+					STYLESTRUCT * style = reinterpret_cast<STYLESTRUCT *>(msg->lParam);
+					if(!(style->styleOld & WS_EX_LAYERED))
+					{
+						style->styleNew &= ~WS_EX_LAYERED;
+					}
+					*result = 0;
+					return true;
+				}
+				return false;
+			default:
+				return false;
+		}
 	}
 	return false;
 }
