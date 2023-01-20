@@ -164,6 +164,12 @@ if(WANT_QT6)
 	find_package(Qt6 6.2.0 COMPONENTS Core Gui Widgets Xml REQUIRED)
 	find_package(Qt6 COMPONENTS LinguistTools QUIET)
 
+	INCLUDE_DIRECTORIES(
+		${Qt6Core_INCLUDE_DIRS}
+		${Qt6Gui_INCLUDE_DIRS}
+		${Qt6Widgets_INCLUDE_DIRS}
+		${Qt6Xml_INCLUDE_DIRS}
+	)
 	set(QT_LIBRARIES
 		Qt6::Core
 		Qt6::Gui
@@ -180,6 +186,12 @@ else()
 	find_package(Qt5 5.6.0 COMPONENTS Core Gui Widgets Xml REQUIRED)
 	find_package(Qt5 COMPONENTS LinguistTools QUIET)
 
+	INCLUDE_DIRECTORIES(
+		${Qt5Core_INCLUDE_DIRS}
+		${Qt5Gui_INCLUDE_DIRS}
+		${Qt5Widgets_INCLUDE_DIRS}
+		${Qt5Xml_INCLUDE_DIRS}
+	)
 	set(QT_LIBRARIES
 		Qt5::Core
 		Qt5::Gui

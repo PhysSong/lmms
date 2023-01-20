@@ -108,25 +108,20 @@ SET(zynaddsubfx_core_SRCS
 )
 
 add_library(ZynAddSubFxCoreObjs OBJECT LocalZynAddSubFx.cpp ${zynaddsubfx_core_SRCS})
-target_link_libraries(ZynAddSubFxCoreObjs PUBLIC
+add_library(ZynAddSubFxCore INTERFACE)
+target_sources(ZynAddSubFxCore INTERFACE
+	$<TARGET_OBJECTS:ZynAddSubFxCoreObjs>
+	$<TARGET_OBJECTS:zynaddsubfx_nio>
+)
+
+target_link_libraries(ZynAddSubFxCore INTERFACE
 	${FFTW3F_LIBRARIES}
 	${QT_LIBRARIES}
 	Threads::Threads
 	ZLIB::ZLIB
 )
 
-add_library(ZynAddSubFxCore INTERFACE)
-target_sources(ZynAddSubFxCore INTERFACE
-	$<TARGET_OBJECTS:ZynAddSubFxCoreObjs>
-	$<TARGET_OBJECTS:zynaddsubfx_nio>
-)
-target_include_directories(ZynAddSubFxCore INTERFACE
-	$<TARGET_PROPERTY:ZynAddSubFxCoreObjs,INTERFACE_INCLUDE_DIRECTORIES>
-)
-target_link_libraries(ZynAddSubFxCore INTERFACE
-	$<TARGET_PROPERTY:ZynAddSubFxCoreObjs,INTERFACE_LINK_LIBRARIES>
-)
-
+LINK_DIRECTORIES("${CMAKE_CURRENT_BINARY_DIR}/..")
 IF(LMMS_BUILD_LINUX)
 	LINK_LIBRARIES(-Wl,--enable-new-dtags)
 	SET(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
