@@ -35,8 +35,12 @@
 #include <QTemporaryFile>
 
 #ifdef LMMS_BUILD_LINUX
-#	include <QX11Info>
-#	include "X11EmbedContainer.h"
+#	if QT_VERSION < 0x060000
+#		include <QX11Info>
+#		include "X11EmbedContainer.h"
+#	elif QT_VERSION >= 0x060200
+#		include <QGuiApplication>
+#	endif
 #endif
 
 #include <QWindow>
@@ -416,10 +420,27 @@ bool VstPlugin::processMessage( const message & _m )
 					(LONG_PTR) gui::getGUI()->mainWindow()->winId() );
 #endif
 
-#ifdef LMMS_BUILD_LINUX
-			XSetTransientForHint( QX11Info::display(),
-					m_pluginWindowID,
-					gui::getGUI()->mainWindow()->winId() );
+#if defined(LMMS_BUILD_LINUX)
+			Display* display = nullptr;
+#	if QT_VERSION >= 0x060200
+			if (qGuiApp)
+			{
+				if (auto x11App = qGuiApp->nativeInterface<QNativeInterface::QX11Application>())
+				{
+					display = x11App->display();
+				}
+			}
+#	elif QT_VERSION < 0x060000
+			display = QX11Info::display();
+#	else
+#		warning Getting X11 display not implemented for Qt6 < 6.2
+#	endif
+			if (display)
+			{
+				XSetTransientForHint(display,
+						m_pluginWindowID,
+						gui::getGUI()->mainWindow()->winId());
+			}
 #endif
 		}
 		break;
@@ -775,7 +796,7 @@ void VstPlugin::createUI( QWidget * parent )
 	} else
 #endif
 
-#ifdef LMMS_BUILD_LINUX
+#if defined(LMMS_BUILD_LINUX) && QT_VERSION < 0x060000
 	if (m_embedMethod == "xembed" )
 	{
 		if (parent)

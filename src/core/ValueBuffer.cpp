@@ -1,5 +1,7 @@
 #include "ValueBuffer.h"
 
+#include <algorithm>
+
 #include "interpolation.h"
 
 namespace lmms
