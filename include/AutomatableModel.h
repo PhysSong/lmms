@@ -84,6 +84,13 @@ public:
 		Bool
 	} ;
 
+	enum StepType
+	{
+		NormalStep,
+		PowerOfTwoStep
+	};
+
+
 	AutomatableModel( DataType type,
 						const float val = 0,
 						const float min = 0,
@@ -172,6 +179,10 @@ public:
 	template<class T>
 	T step() const
 	{
+		if( m_stepType == PowerOfTwoStep )
+		{
+			return castValue<T>( qMax( m_value * 0.5f, 1.0f ) );
+		}
 		return castValue<T>( m_step );
 	}
 	
@@ -187,7 +198,16 @@ public:
 
 	void incValue( int steps )
 	{
-		setValue( m_value + steps * m_step );
+		switch( m_stepType )
+		{
+			default:
+			case NormalStep:
+				setValue( m_value + steps * m_step );
+				break;
+			case PowerOfTwoStep:
+				setValue( steps > 0 ? m_value * ( 1 << steps ) : m_value / ( 1 << -steps ) );
+				break;
+		}
 	}
 
 	float range() const
@@ -286,6 +306,16 @@ public:
 		s_periodCounter = 0;
 	}
 
+	void setStepType( StepType s )
+	{
+		m_stepType = s;
+	}
+
+	StepType stepType() const
+	{
+		return m_stepType;
+	}
+
 public slots:
 	virtual void reset();
 	virtual void copyValue();
@@ -360,6 +390,8 @@ private:
 	
 	bool m_hasSampleExactData;
 	
+	StepType m_stepType;
+
 	// prevent several threads from attempting to write the same vb at the same time
 	QMutex m_valueBufferMutex;
 
@@ -422,6 +454,7 @@ public:
 				bool defaultConstructed = false ) :
 		AutomatableModel( Integer, val, min, max, 1, parent, displayName, defaultConstructed )
 	{
+		setStrictStepSize( true );
 	}
 
 	defaultTypedMethods(int);
@@ -438,6 +471,7 @@ public:
 				bool defaultConstructed = false ) :
 		AutomatableModel( Bool, val, false, true, 1, parent, displayName, defaultConstructed )
 	{
+		setStrictStepSize( true );
 	}
 
 	defaultTypedMethods(bool);

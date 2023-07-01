@@ -54,8 +54,8 @@ AutomatableModel::AutomatableModel( DataType type,
 	m_controllerConnection( NULL ),
 	m_valueBuffer( static_cast<int>( Engine::mixer()->framesPerPeriod() ) ),
 	m_lastUpdatedPeriod( -1 ),
-	m_hasSampleExactData( false )
-
+	m_hasSampleExactData( false ),
+	m_stepType( NormalStep )
 {
 	setInitValue( val );
 }
@@ -375,9 +375,26 @@ float AutomatableModel::fittedValue( float value, bool forceStep ) const
 {
 	value = tLimit<float>( value, m_minValue, m_maxValue );
 
-	if( m_step != 0 && ( m_hasStrictStepSize || forceStep ) )
+	if( m_hasStrictStepSize || forceStep )
 	{
-		value = nearbyintf( value / m_step ) * m_step;
+		switch( m_stepType )
+		{
+			default:
+			case NormalStep:
+				value = m_step > 0.0f ? nearbyintf( value / m_step ) * m_step : value;
+				break;
+			case PowerOfTwoStep:
+				int v = (int) value;
+				--v;
+				v |= v >> 1;
+				v |= v >> 2;
+				v |= v >> 4;
+				v |= v >> 8;
+				v |= v >> 16;
+				++v;
+				value = (float) v;
+				break;
+		}
 	}
 
 	roundAt( value, m_maxValue );
