@@ -89,8 +89,10 @@
 
 #ifdef USE_MINGW_THREADS_REPLACEMENT
 #	include <mingw.mutex.h>
+#	include <mingw.thread.h>
 #else
 #	include <mutex>
+#	include <thread>
 #endif
 
 #include <algorithm>
@@ -100,6 +102,7 @@
 #include <iostream>
 #include <string>
 #include <cstring>
+#include <system_error>
 
 #include <aeffectx.h>
 
@@ -141,12 +144,11 @@ class RemoteVstPlugin;
 
 lmms::RemoteVstPlugin * __plugin = nullptr;
 
-#ifndef NATIVE_LINUX_VST
+#ifdef _WIN32
 HWND __MessageHwnd = nullptr;
-DWORD __processingThreadId = 0;
-#else
-pthread_t __processingThreadId = 0;
 #endif
+
+std::thread __processingThread;
 
 namespace lmms
 {
@@ -370,14 +372,10 @@ public:
 	void sendX11Idle();
 #endif
 
-#ifndef NATIVE_LINUX_VST
-	static DWORD WINAPI processingThread( LPVOID _param );
-#else
-	static void * processingThread( void * _param );
-#endif
+	void processingThread();
 	
 	static bool setupMessageWindow();
-	
+
 #ifndef NATIVE_LINUX_VST
 	static DWORD WINAPI guiEventLoop();
 #else
@@ -1664,12 +1662,8 @@ int RemoteVstPlugin::updateInOutCount()
 	{
 		return 1;
 	}
-	
-#ifndef NATIVE_LINUX_VST
-	if( GetCurrentThreadId() == __processingThreadId )
-#else
-	if( pthread_equal(pthread_self(), __processingThreadId) )
-#endif
+
+	if( std::this_thread::get_id() == __processingThread.get_id() )
 	{
 		debugMessage( "Plugin requested I/O change from processing "
 			"thread. Request denied; stability may suffer.\n" );
@@ -2198,23 +2192,10 @@ void RemoteVstPlugin::sendX11Idle()
 }
 #endif
 
-
-#ifndef NATIVE_LINUX_VST
-DWORD WINAPI RemoteVstPlugin::processingThread( LPVOID _param )
-#else
-void * RemoteVstPlugin::processingThread(void * _param)
-#endif
+void RemoteVstPlugin::processingThread()
 {
-#ifndef NATIVE_LINUX_VST
-	__processingThreadId = GetCurrentThreadId();
-#else
-	__processingThreadId = pthread_self();
-#endif
-
-	RemoteVstPlugin * _this = static_cast<RemoteVstPlugin *>( _param );
-
 	RemotePluginClient::message m;
-	while( ( m = _this->receiveMessage() ).id != IdQuit )
+	while( ( m = receiveMessage() ).id != IdQuit )
 	{
 		
 		if( m.id == IdStartProcessing
@@ -2222,12 +2203,12 @@ void * RemoteVstPlugin::processingThread(void * _param)
 			|| m.id == IdVstSetParameter
 			|| m.id == IdVstSetTempo)
 		{
-			_this->processMessage( m );
+			processMessage( m );
 		}
 		else if( m.id == IdChangeSharedMemoryKey )
 		{
-			_this->processMessage( m );
-			_this->setShmIsValid( true );
+			processMessage( m );
+			setShmIsValid( true );
 		}
 		else
 		{
@@ -2237,7 +2218,7 @@ void * RemoteVstPlugin::processingThread(void * _param)
 					ProcessPluginMessage,
 					(LPARAM) new message( m ) );
 #else
-		_this->queueMessage( m );
+		queueMessage( m );
 #endif
 		}
 	}
@@ -2245,15 +2226,11 @@ void * RemoteVstPlugin::processingThread(void * _param)
 	// notify GUI thread about shutdown
 #ifndef NATIVE_LINUX_VST
 	PostMessage( __MessageHwnd, WM_USER, ClosePlugin, 0 );
-
-	return 0;
 #else
 	if (m.id == IdQuit)
 	{
-		_this->queueMessage( m );
+		queueMessage( m );
 	}
-
-	return nullptr;
 #endif
 }
 
@@ -2516,24 +2493,18 @@ int main( int _argc, char * * _argv )
 		{
 			return -1;
 		}
-#ifndef NATIVE_LINUX_VST
-		if( CreateThread( nullptr, 0, RemoteVstPlugin::processingThread,
-						__plugin, 0, nullptr ) == nullptr )
-#else
-		int err = 0;
-		err = pthread_create(&__processingThreadId, nullptr, &RemoteVstPlugin::processingThread, __plugin);
-		if (err != 0)
-#endif
+		try
 		{
-			__plugin->debugMessage( "could not create "
-							"processingThread\n" );
+			__processingThread = std::thread(&RemoteVstPlugin::processingThread, __plugin);
+		}
+		catch (const std::system_error& e)
+		{
+			__plugin->debugMessage(std::string{"Could not create processingThread: "} + e.what() + '\n');
 			return -1;
 		}
 
 		__plugin->guiEventLoop();
-#ifdef NATIVE_LINUX_VST
-		pthread_join(__processingThreadId, nullptr);
-#endif
+		__processingThread.join();
 	}
 
 	delete __plugin;
