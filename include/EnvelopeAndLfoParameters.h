@@ -71,11 +71,6 @@ public:
 							Model * _parent );
 	virtual ~EnvelopeAndLfoParameters();
 
-	static inline float expKnobVal( float _val )
-	{
-		return ( ( _val < 0 ) ? -_val : _val ) * _val;
-	}
-
 	static LfoInstances * instances()
 	{
 		return s_lfoInstances;
@@ -122,12 +117,12 @@ private:
 	bool m_used;
 
 
-	FloatModel m_predelayModel;
-	FloatModel m_attackModel;
-	FloatModel m_holdModel;
-	FloatModel m_decayModel;
+	TempoSyncKnobModel m_predelayModel;
+	TempoSyncKnobModel m_attackModel;
+	TempoSyncKnobModel m_holdModel;
+	TempoSyncKnobModel m_decayModel;
 	FloatModel m_sustainModel;
-	FloatModel m_releaseModel;
+	TempoSyncKnobModel m_releaseModel;
 	FloatModel m_amountModel;
 
 	float  m_sustainLevel;
@@ -142,8 +137,8 @@ private:
 	f_cnt_t m_rBufSize;
 
 
-	FloatModel m_lfoPredelayModel;
-	FloatModel m_lfoAttackModel;
+	TempoSyncKnobModel m_lfoPredelayModel;
+	TempoSyncKnobModel m_lfoAttackModel;
 	TempoSyncKnobModel m_lfoSpeedModel;
 	FloatModel m_lfoAmountModel;
 	IntModel m_lfoWaveModel;
