@@ -44,6 +44,7 @@
 #include "lmms_constants.h"
 #include "interpolation.h"
 #include "MemoryManager.h"
+#include <QString>
 
 //#include <iostream>
 //#include <cstdlib>
@@ -138,8 +139,10 @@ public:
 		BandPass_CZPG,
 		Notch,
 		AllPass,
-		Moog,
 		DoubleLowPass,
+		Moog,
+		DoubleMoog,
+		Tripole,
 		Lowpass_RC12,
 		Bandpass_RC12,
 		Highpass_RC12,
@@ -147,13 +150,11 @@ public:
 		Bandpass_RC24,
 		Highpass_RC24,
 		Formantfilter,
-		DoubleMoog,
+		FastFormant,
 		Lowpass_SV,
 		Bandpass_SV,
 		Highpass_SV,
 		Notch_SV,
-		FastFormant,
-		Tripole,
 		NumFilters
 	};
 
@@ -696,7 +697,7 @@ public:
 			// (Empirical tunning)
 			m_p = ( 3.6f - 3.2f * f ) * f;
 			m_k = 2.0f * m_p - 1;
-			m_r = _q * powf( F_E, ( 1 - m_p ) * 1.386249f );
+			m_r = ( _q * 0.1f ) * powf( F_E, ( 1 - m_p ) * 1.386249f );
 
 			if( m_doubleFilter )
 			{
@@ -833,6 +834,136 @@ private:
 	BasicFilters<CHANNELS> * m_subFilter;
 
 } ;
+
+class BasicFilterNames : QObject
+{
+	Q_OBJECT
+public:
+	static inline QString pixmap( BasicFilters<0>::FilterTypes type )
+	{
+		switch( type )
+		{
+			default:
+			case BasicFilters<0>::LowPass:
+			case BasicFilters<0>::Moog:
+			case BasicFilters<0>::Lowpass_RC12:
+			case BasicFilters<0>::Lowpass_RC24:
+			case BasicFilters<0>::Lowpass_SV:
+			case BasicFilters<0>::Tripole:
+				return "filter_lp";
+				break;
+			case BasicFilters<0>::DoubleLowPass:
+			case BasicFilters<0>::DoubleMoog:
+				return "filter_2lp";
+				break;
+			case BasicFilters<0>::HiPass:
+			case BasicFilters<0>::Highpass_RC12:
+			case BasicFilters<0>::Highpass_RC24:
+			case BasicFilters<0>::Highpass_SV:
+				return "filter_hp";
+				break;
+			case BasicFilters<0>::BandPass_CSG:
+			case BasicFilters<0>::BandPass_CZPG:
+			case BasicFilters<0>::Bandpass_RC12:
+			case BasicFilters<0>::Bandpass_RC24:
+			case BasicFilters<0>::Bandpass_SV:
+			case BasicFilters<0>::Formantfilter:
+			case BasicFilters<0>::FastFormant:
+				return "filter_bp";
+				break;
+			case BasicFilters<0>::Notch:
+			case BasicFilters<0>::Notch_SV:
+				return "filter_notch";
+				break;
+			case BasicFilters<0>::AllPass:
+				return "filter_ap";
+				break;
+			case BasicFilters<0>::NumFilters:
+				return "";
+				break;
+		}
+	}
+
+	// the translated string is the display name
+	// the non-translated string is used internally and shouldn't be changed!!!
+	static inline QString name( BasicFilters<0>::FilterTypes type, bool translate = false )
+	{
+		switch( type )
+		{
+			default:
+			case BasicFilters<0>::LowPass:
+				return translate ? tr( "BQ Lowpass" ) : "BQ Lowpass";
+				break;
+			case BasicFilters<0>::HiPass:
+				return translate ? tr( "BQ Highpass" ) : "BQ Highpass";
+				break;
+			case BasicFilters<0>::BandPass_CSG:
+				return translate ? tr( "BQ Bandpass CSG" ) : "BQ Bandpass CSG";
+				break;
+			case BasicFilters<0>::BandPass_CZPG:
+				return translate ? tr( "BQ Bandpass CZPG" ) : "BQ Bandpass CZPG";
+				break;
+			case BasicFilters<0>::Notch:
+				return translate ? tr( "BQ Notch" ) : "BQ Notch";
+				break;
+			case BasicFilters<0>::AllPass:
+				return translate ? tr( "BQ Allpass" ) : "BQ Allpass";
+				break;
+			case BasicFilters<0>::DoubleLowPass:
+				return translate ? tr( "BQ Lowpass x2" ) : "BQ Lowpass x2";
+				break;
+			case BasicFilters<0>::Moog:
+				return translate ? tr( "Moog Lowpass" ) : "Moog Lowpass";
+				break;
+			case BasicFilters<0>::DoubleMoog:
+				return translate ? tr( "Moog Lowpass x2" ) : "Moog Lowpass x2";
+				break;
+			case BasicFilters<0>::Tripole:
+				return translate ? tr( "Tripole Lowpass" ) : "Tripole Lowpass";
+				break;
+			case BasicFilters<0>::Lowpass_RC12:
+				return translate ? tr( "RC Lowpass 12dB/oct" ) : "RC Lowpass 12dB/oct";
+				break;
+			case BasicFilters<0>::Bandpass_RC12:
+				return translate ? tr( "RC Bandpass 12dB/oct" ) : "RC Bandpass 12dB/oct";
+				break;
+			case BasicFilters<0>::Highpass_RC12:
+				return translate ? tr( "RC Highpass 12dB/oct" ) : "RC Highpass 12dB/oct";
+				break;
+			case BasicFilters<0>::Lowpass_RC24:
+				return translate ? tr( "RC Lowpass 24dB/oct" ) : "RC Lowpass 24dB/oct";
+				break;
+			case BasicFilters<0>::Bandpass_RC24:
+				return translate ? tr( "RC Bandpass 24dB/oct" ) : "RC Bandpass 24dB/oct";
+				break;
+			case BasicFilters<0>::Highpass_RC24:
+				return translate ? tr( "RC Highpass 24dB/oct" ) : "RC Highpass 24dB/oct";
+				break;
+			case BasicFilters<0>::Formantfilter:
+				return translate ? tr( "Vocal Formant" ) : "Vocal Formant";
+				break;
+			case BasicFilters<0>::FastFormant:
+				return translate ? tr( "Fast Formant" ) : "Fast Formant";
+				break;
+			case BasicFilters<0>::Lowpass_SV:
+				return translate ? tr( "SV Lowpass" ) : "SV Lowpass";
+				break;
+			case BasicFilters<0>::Bandpass_SV:
+				return translate ? tr( "SV Bandpass" ) : "SV Bandpass";
+				break;
+			case BasicFilters<0>::Highpass_SV:
+				return translate ? tr( "SV Highpass" ) : "SV Highpass";
+				break;
+			case BasicFilters<0>::Notch_SV:
+				return translate ? tr( "SV Notch" ) : "SV Notch";
+				break;
+			case BasicFilters<0>::NumFilters:
+				return "";
+				break;
+		}
+		return "";
+	}
+};
 
 
 #endif
