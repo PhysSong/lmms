@@ -79,6 +79,8 @@ public:
 		return "port";
 	}
 
+	void setSampleExact( bool s );
+
 
 signals:
 	void changed( int _port, LADSPA_Data _value );

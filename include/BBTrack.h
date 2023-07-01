@@ -39,7 +39,7 @@ class TrackContainer;
 class BBTCO : public TrackContentObject
 {
 public:
-	BBTCO( Track * _track );
+	BBTCO( Track * _track, const MidiTime & pos );
 	virtual ~BBTCO();
 
 	virtual void saveSettings( QDomDocument & _doc, QDomElement & _parent );
@@ -135,6 +135,8 @@ public:
 	virtual void saveTrackSpecificSettings( QDomDocument & _doc,
 							QDomElement & _parent );
 	virtual void loadTrackSpecificSettings( const QDomElement & _this );
+
+	virtual ProcessHandle * getProcessHandle();
 
 	static BBTrack * findBBTrack( int _bb_num );
 	static void swapBBTracks( Track * _track1, Track * _track2 );

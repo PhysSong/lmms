@@ -40,6 +40,7 @@ FxRoute::FxRoute( FxChannel * from, FxChannel * to, float amount ) :
 	m_amount( amount, 0, 1, 0.001, NULL,
 			tr( "Amount to send from channel %1 to channel %2" ).arg( m_from->m_channelIndex ).arg( m_to->m_channelIndex ) )
 {
+	m_amount.setSampleExact( true );
 	//qDebug( "created: %d to %d", m_from->m_channelIndex, m_to->m_channelIndex );
 	// create send amount model
 }
@@ -73,6 +74,7 @@ FxChannel::FxChannel( int idx, Model * _parent ) :
 	m_queued( false ),
 	m_dependenciesMet( 0 )
 {
+	m_volumeModel.setSampleExact( true );
 	Engine::mixer()->clearAudioBuffer( m_buffer,
 					Engine::mixer()->framesPerPeriod() );
 }
@@ -288,7 +290,7 @@ void FxMixer::deleteChannel( int index )
 	FxChannel * ch = m_fxChannels[index];
 
 	// go through every instrument and adjust for the channel index change
-	TrackContainer::TrackList tracks;
+	TrackList tracks;
 	tracks += Engine::getSong()->tracks();
 	tracks += Engine::getBBTrackContainer()->tracks();
 
@@ -297,7 +299,7 @@ void FxMixer::deleteChannel( int index )
 		if( t->type() == Track::InstrumentTrack )
 		{
 			InstrumentTrack* inst = dynamic_cast<InstrumentTrack *>( t );
-			int val = inst->effectChannelModel()->value(0);
+			int val = inst->effectChannelModel()->value();
 			if( val == index )
 			{
 				// we are deleting this track's fx send
@@ -357,7 +359,7 @@ void FxMixer::moveChannelLeft( int index )
 			if( trackList[i]->type() == Track::InstrumentTrack )
 			{
 				InstrumentTrack * inst = (InstrumentTrack *) trackList[i];
-				int val = inst->effectChannelModel()->value(0);
+				int val = inst->effectChannelModel()->value();
 				if( val == a )
 				{
 					inst->effectChannelModel()->setValue(b);

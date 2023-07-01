@@ -70,9 +70,6 @@ tick_t MidiTime::s_ticksPerTact = DefaultTicksPerTact;
 
 Song::Song() :
 	TrackContainer(),
-	m_globalAutomationTrack( dynamic_cast<AutomationTrack *>(
-				Track::create( Track::HiddenAutomationTrack,
-								this ) ) ),
 	m_tempoModel( DefaultTempo, MinTempo, MaxTempo, this, tr( "Tempo" ) ),
 	m_timeSigModel( this ),
 	m_oldTicksPerTact( DefaultTicksPerTact ),
@@ -92,10 +89,11 @@ Song::Song() :
 	m_trackToPlay( NULL ),
 	m_patternToPlay( NULL ),
 	m_loopPattern( false ),
-	m_elapsedMilliSeconds( 0 ),
+	m_elapsedFrames( 0 ),
 	m_elapsedTicks( 0 ),
 	m_elapsedTacts( 0 )
 {
+	m_trackList.reserve( 1000 );
 	connect( &m_tempoModel, SIGNAL( dataChanged() ),
 						this, SLOT( setTempo() ) );
 	connect( &m_tempoModel, SIGNAL( dataUnchanged() ),
@@ -103,6 +101,10 @@ Song::Song() :
 	connect( &m_timeSigModel, SIGNAL( dataChanged() ),
 					this, SLOT( setTimeSignature() ) );
 
+	m_tempoModel.setAutomationEnabled( false );
+	m_timeSigModel.numeratorModel().setAutomationEnabled( false );
+	m_timeSigModel.denominatorModel().setAutomationEnabled( false );
+	m_timeSigModel.denominatorModel().setStepType( AutomatableModel::PowerOfTwoStep );
 
 	connect( Engine::mixer(), SIGNAL( sampleRateChanged() ), this,
 						SLOT( updateFramesPerTick() ) );
@@ -113,6 +115,11 @@ Song::Song() :
 			this, SLOT( masterPitchChanged() ) );*/
 
 	qRegisterMetaType<Note>( "note" );
+
+	m_lastTempo = m_tempoModel.value();
+	m_playbackStartFpt = Engine::tempoToFramesPerTick( m_lastTempo );
+	m_playbackStartTempo = m_lastTempo;
+	m_vstSyncController.setTempo( m_lastTempo );
 }
 
 
@@ -121,7 +128,6 @@ Song::Song() :
 Song::~Song()
 {
 	m_playing = false;
-	delete m_globalAutomationTrack;
 }
 
 
@@ -136,8 +142,17 @@ void Song::masterVolumeChanged()
 
 
 
-void Song::setTempo()
+void Song::setTempo() // called when the tempo widget is changed manually
 {
+	// if we're already playing the song, don't change the playback-start values
+	if( ! ( m_playing && ( m_playMode == Mode_PlaySong || m_playMode == Mode_PlayTrack ) ) )
+	{
+		m_playbackStartTempo = m_tempoModel.value();
+		Engine::updateFramesPerTick();
+		m_playbackStartFpt = Engine::framesPerTick();
+		m_vstSyncController.setTempo( m_tempoModel.value() ); // if we're not playing, we also need to update vst-sync here
+	}
+	/*
 	Engine::mixer()->lockPlayHandleRemoval();
 	const bpm_t tempo = (bpm_t) m_tempoModel.value();
 	PlayHandleList & playHandles = Engine::mixer()->playHandles();
@@ -159,6 +174,31 @@ void Song::setTempo()
 	m_vstSyncController.setTempo( tempo );
 
 	emit tempoChanged( tempo );
+	*/
+}
+
+
+float Song::actualTempo() const
+{
+	// if we're not playing the song or a track, return the tempo widget tempo
+	if( ! ( m_playing && ( m_playMode == Mode_PlaySong || m_playMode == Mode_PlayTrack ) ) )
+	{
+		return m_tempoModel.value();
+	}
+	// we are playing, so return tempo from tempomap
+	return Engine::tempoAt( m_playPos[m_playMode] );
+}
+
+
+float Song::actualFpt() const
+{
+	// if we're not playing the song or a track, return value based on the tempo widget tempo
+	if( ! ( m_playing && ( m_playMode == Mode_PlaySong || m_playMode == Mode_PlayTrack ) ) )
+	{
+		return Engine::framesPerTick();
+	}
+	// we are playing, so return tempo from tempomap
+	return Engine::framesPerTick( m_playPos[m_playMode] );
 }
 
 
@@ -188,6 +228,11 @@ void Song::savePos()
 }
 
 
+float Song::elapsedMilliSeconds() const
+{
+	return m_elapsedFrames * 1000.0f / Engine::mixer()->processingSampleRate();
+}
+
 
 
 void Song::processNextBuffer()
@@ -197,40 +242,54 @@ void Song::processNextBuffer()
 		return;
 	}
 
-	TrackList track_list;
-	int tco_num = -1;
+	m_trackList.clear();
+	m_playingTcoNum = -1;
+
+	m_ticksThisPeriod.clear();
+
+	float tempo = m_lastTempo;
+	bool useTempoMap = false;
 
 	switch( m_playMode )
 	{
 		case Mode_PlaySong:
-			track_list = tracks();
+			qDebug( "tick %d, tempo %f, fpt %f", m_playPos[m_playMode].getTicks(),
+				Engine::tempoAt( m_playPos[m_playMode] ), Engine::framesPerTick( m_playPos[m_playMode] ) );
+			m_trackList = tracks();
 			// at song-start we have to reset the LFOs
 			if( m_playPos[Mode_PlaySong] == 0 )
 			{
 				EnvelopeAndLfoParameters::instances()->reset();
 			}
+			useTempoMap = true;
 			break;
 
 		case Mode_PlayTrack:
-			track_list.push_back( m_trackToPlay );
+			m_trackList.push_back( m_trackToPlay );
+			// at song-start we have to reset the LFOs
+			if( m_playPos[Mode_PlayTrack] == 0 )
+			{
+				EnvelopeAndLfoParameters::instances()->reset();
+			}
+			useTempoMap = true;
 			break;
 
 		case Mode_PlayBB:
 			if( Engine::getBBTrackContainer()->numOfBBs() > 0 )
 			{
-				tco_num = Engine::getBBTrackContainer()->
+				m_playingTcoNum = Engine::getBBTrackContainer()->
 								currentBB();
-				track_list.push_back( BBTrack::findBBTrack(
-								tco_num ) );
+				m_trackList.push_back( BBTrack::findBBTrack(
+								m_playingTcoNum ) );
 			}
 			break;
 
 		case Mode_PlayPattern:
 			if( m_patternToPlay != NULL )
 			{
-				tco_num = m_patternToPlay->getTrack()->
+				m_playingTcoNum = m_patternToPlay->getTrack()->
 						getTCONum( m_patternToPlay );
-				track_list.push_back(
+				m_trackList.push_back(
 						m_patternToPlay->getTrack() );
 			}
 			break;
@@ -240,9 +299,26 @@ void Song::processNextBuffer()
 
 	}
 
-	if( track_list.empty() == true )
+	// save the starting position of the period for further use
+	m_periodStartPos[m_playMode] = m_playPos[m_playMode];
+
+	if( m_trackList.empty() == true )
 	{
 		return;
+	}
+
+	float framesPerTick;
+
+	// update tempo and fpt, either from tempomap or from tempo widget
+	if( useTempoMap )
+	{
+		tempo = Engine::tempoAt( m_playPos[m_playMode] );
+		framesPerTick = Engine::framesPerTick( m_playPos[m_playMode] );
+	}
+	else
+	{
+		tempo = m_tempoModel.value();
+		framesPerTick = Engine::framesPerTick();
 	}
 
 	// check for looping-mode and act if necessary
@@ -254,27 +330,30 @@ void Song::processNextBuffer()
 		if( m_playPos[m_playMode] < tl->loopBegin() ||
 					m_playPos[m_playMode] >= tl->loopEnd() )
 		{
-			m_elapsedMilliSeconds = (tl->loopBegin().getTicks()*60*1000/48)/getTempo();
-			m_playPos[m_playMode].setTicks(
-						tl->loopBegin().getTicks() );
+			m_elapsedFrames = tl->loopBegin().getTicks() * framesPerTick;
+			m_playPos[m_playMode].setTicks(	tl->loopBegin().getTicks() );
 		}
 	}
 
 	f_cnt_t total_frames_played = 0;
-	const float frames_per_tick = Engine::framesPerTick();
 
-	while( total_frames_played
-				< Engine::mixer()->framesPerPeriod() )
+	while( total_frames_played < Engine::mixer()->framesPerPeriod() )
 	{
+		// update vst sync if tempo has changed
+		if( tempo != m_lastTempo )
+		{
+			m_vstSyncController.setTempo( tempo );
+			m_lastTempo = tempo;
+		}
 		m_vstSyncController.update();
 
 		f_cnt_t played_frames = Engine::mixer()->framesPerPeriod() - total_frames_played;
 
 		float current_frame = m_playPos[m_playMode].currentFrame();
 		// did we play a tick?
-		if( current_frame >= frames_per_tick )
+		if( current_frame >= framesPerTick )
 		{
-			int ticks = m_playPos[m_playMode].getTicks() + (int)( current_frame / frames_per_tick );
+			int ticks = m_playPos[m_playMode].getTicks() + (int)( current_frame / framesPerTick );
 
 			m_vstSyncController.setAbsolutePosition( ticks );
 
@@ -284,40 +363,42 @@ void Song::processNextBuffer()
 				// per default we just continue playing even if
 				// there's no more stuff to play
 				// (song-play-mode)
-				int max_tact = m_playPos[m_playMode].getTact()
-									+ 2;
+				int max_tact = m_playPos[m_playMode].getTact() + 2;
 
 				// then decide whether to go over to next tact
 				// or to loop back to first tact
 				if( m_playMode == Mode_PlayBB )
 				{
-					max_tact = Engine::getBBTrackContainer()
-							->lengthOfCurrentBB();
+					max_tact = Engine::getBBTrackContainer()->lengthOfCurrentBB();
 				}
 				else if( m_playMode == Mode_PlayPattern &&
 					m_loopPattern == true &&
 					tl != NULL &&
 					tl->loopPointsEnabled() == false )
 				{
-					max_tact = m_patternToPlay->length()
-								.getTact();
+					max_tact = m_patternToPlay->length().getTact();
 				}
 
 				// end of played object reached?
-				if( m_playPos[m_playMode].getTact() + 1
-								>= max_tact )
+				if( m_playPos[m_playMode].getTact() + 1 >= max_tact )
 				{
 					// then start from beginning and keep
 					// offset
 					ticks = ticks % ( max_tact * MidiTime::ticksPerTact() );
 
 					// wrap milli second counter
-					m_elapsedMilliSeconds = ( ticks * 60 * 1000 / 48 ) / getTempo();
+					m_elapsedFrames = ( ticks * framesPerTick );
 
 					m_vstSyncController.setAbsolutePosition( ticks );
 				}
 			}
 			m_playPos[m_playMode].setTicks( ticks );
+			// if tempomap is used, update tempo and fpt
+			if( useTempoMap )
+			{
+				tempo = Engine::tempoAt( m_playPos[m_playMode] );
+				framesPerTick = Engine::framesPerTick( m_playPos[m_playMode] );
+			}
 
 			if( check_loop )
 			{
@@ -326,7 +407,7 @@ void Song::processNextBuffer()
 				if( m_playPos[m_playMode] >= tl->loopEnd() )
 				{
 					m_playPos[m_playMode].setTicks( tl->loopBegin().getTicks() );
-					m_elapsedMilliSeconds = ((tl->loopBegin().getTicks())*60*1000/48)/getTempo();
+					m_elapsedFrames = tl->loopBegin().getTicks() * framesPerTick;
 				}
 			}
 			else
@@ -334,18 +415,16 @@ void Song::processNextBuffer()
 				m_vstSyncController.stopCycle();
 			}
 
-			current_frame = fmodf( current_frame, frames_per_tick );
+			current_frame = fmodf( current_frame, framesPerTick );
 			m_playPos[m_playMode].setCurrentFrame( current_frame );
 		}
 
-		f_cnt_t last_frames = (f_cnt_t)frames_per_tick -
-						(f_cnt_t) current_frame;
+		f_cnt_t last_frames = (f_cnt_t)framesPerTick - (f_cnt_t) current_frame;
 		// skip last frame fraction
 		if( last_frames == 0 )
 		{
 			++total_frames_played;
-			m_playPos[m_playMode].setCurrentFrame( current_frame
-								+ 1.0f );
+			m_playPos[m_playMode].setCurrentFrame( current_frame + 1.0f );
 			continue;
 		}
 		// do we have some samples left in this tick but these are
@@ -359,28 +438,14 @@ void Song::processNextBuffer()
 
 		if( (f_cnt_t) current_frame == 0 )
 		{
-			if( m_playMode == Mode_PlaySong )
-			{
-				m_globalAutomationTrack->play(
-						m_playPos[m_playMode],
-						played_frames,
-						total_frames_played, tco_num );
-			}
-
-			// loop through all tracks and play them
-			for( int i = 0; i < track_list.size(); ++i )
-			{
-				track_list[i]->play( m_playPos[m_playMode],
-						played_frames,
-						total_frames_played, tco_num );
-			}
+			// save the tick's frame offset into a hash so tracks can read it and know which ticks to play
+			m_ticksThisPeriod[ m_playPos[m_playMode].getTicks() ] = total_frames_played;
 		}
 
 		// update frame-counters
 		total_frames_played += played_frames;
-		m_playPos[m_playMode].setCurrentFrame( played_frames +
-								current_frame );
-		m_elapsedMilliSeconds += (((played_frames/frames_per_tick)*60*1000/48)/getTempo());
+		m_playPos[m_playMode].setCurrentFrame( played_frames + current_frame );
+		m_elapsedFrames += played_frames;
 		m_elapsedTacts = m_playPos[Mode_PlaySong].getTact();
 		m_elapsedTicks = (m_playPos[Mode_PlaySong].getTicks()%ticksPerTact())/48;
 	}
@@ -522,7 +587,7 @@ void Song::updateLength()
 void Song::setPlayPos( tick_t _ticks, PlayModes _play_mode )
 {
 	m_elapsedTicks += m_playPos[_play_mode].getTicks() - _ticks;
-	m_elapsedMilliSeconds += (((( _ticks - m_playPos[_play_mode].getTicks()))*60*1000/48)/getTempo());
+	m_elapsedFrames = _ticks * Engine::framesPerTick(); // TODO 2.0 : fix this counter to use fpt map when appropriate
 	m_playPos[_play_mode].setTicks( _ticks );
 	m_playPos[_play_mode].setCurrentFrame( 0.0f );
 
@@ -577,14 +642,14 @@ void Song::stop()
 		{
 			case Timeline::BackToZero:
 				m_playPos[m_playMode].setTicks( 0 );
-				m_elapsedMilliSeconds = 0;
+				m_elapsedFrames = 0;
 				break;
 
 			case Timeline::BackToStart:
 				if( tl->savedPos() >= 0 )
 				{
 					m_playPos[m_playMode].setTicks( tl->savedPos().getTicks() );
-					m_elapsedMilliSeconds = (((tl->savedPos().getTicks())*60*1000/48)/getTempo());
+					m_elapsedFrames = tl->savedPos().getTicks() * Engine::framesPerTick();
 					tl->savePos( -1 );
 				}
 				break;
@@ -597,7 +662,7 @@ void Song::stop()
 	else
 	{
 		m_playPos[m_playMode].setTicks( 0 );
-		m_elapsedMilliSeconds = 0;
+		m_elapsedFrames = 0;
 	}
 
 	m_playPos[m_playMode].setCurrentFrame( 0 );
@@ -695,9 +760,9 @@ void Song::addAutomationTrack()
 
 
 
-bpm_t Song::getTempo()
+float Song::getTempo()
 {
-	return (bpm_t) m_tempoModel.value();
+	return m_tempoModel.value();
 }
 
 
@@ -705,7 +770,7 @@ bpm_t Song::getTempo()
 
 AutomationPattern * Song::tempoAutomationPattern()
 {
-	return AutomationPattern::globalAutomationPattern( &m_tempoModel );
+	return NULL;
 }
 
 
@@ -760,12 +825,6 @@ void Song::clearProject()
 	m_masterPitchModel.reset();
 	m_timeSigModel.reset();
 
-	AutomationPattern::globalAutomationPattern( &m_tempoModel )->clear();
-	AutomationPattern::globalAutomationPattern( &m_masterVolumeModel )->
-									clear();
-	AutomationPattern::globalAutomationPattern( &m_masterPitchModel )->
-									clear();
-
 	Engine::mixer()->unlock();
 
 	if( Engine::getProjectNotes() )
@@ -778,6 +837,9 @@ void Song::clearProject()
 	{
 		delete m_controllers.last();
 	}
+
+	// new tempo track
+	Track::create( Track::TempoTrack, this );
 
 	emit dataChanged();
 
@@ -914,15 +976,6 @@ void Song::loadProject( const QString & _file_name )
 		m_playPos[Mode_PlaySong].m_timeLine->toggleLoopPoints( 0 );
 	}
 
-	if( !dataFile.content().firstChildElement( "track" ).isNull() )
-	{
-		m_globalAutomationTrack->restoreState( dataFile.content().
-						firstChildElement( "track" ) );
-	}
-
-	//Backward compatibility for LMMS <= 0.4.15
-	PeakController::initGetControllerBySetting();
-
 	// Load mixer first to be able to set the correct range for FX channels
 	node = dataFile.content().firstChildElement( Engine::fxMixer()->nodeName() );
 	if( !node.isNull() )
@@ -984,7 +1037,7 @@ void Song::loadProject( const QString & _file_name )
 	ControllerConnection::finalizeConnections();
 
 	// resolve all IDs so that autoModels are automated
-	AutomationPattern::resolveAllIDs();
+	AutomationTrack::resolveAllIDs();
 
 
 	Engine::mixer()->unlock();
@@ -1021,7 +1074,6 @@ bool Song::saveProjectFile( const QString & _filename )
 
 	saveState( dataFile, dataFile.content() );
 
-	m_globalAutomationTrack->saveState( dataFile, dataFile.content() );
 	Engine::fxMixer()->saveState( dataFile, dataFile.content() );
 	if( Engine::hasGUI() )
 	{

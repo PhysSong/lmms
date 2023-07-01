@@ -40,7 +40,7 @@ class SampleTCO : public TrackContentObject
 	Q_OBJECT
 	mapPropertyFromModel(bool,isRecord,setRecord,m_recordModel);
 public:
-	SampleTCO( Track * _track );
+	SampleTCO( Track * _track, const MidiTime & pos );
 	virtual ~SampleTCO();
 
 	virtual void changeLength( const MidiTime & _length );
@@ -130,6 +130,7 @@ public:
 	virtual TrackView * createView( TrackContainerView* tcv );
 	virtual TrackContentObject * createTCO( const MidiTime & _pos );
 
+	virtual ProcessHandle * getProcessHandle();
 
 	virtual void saveTrackSpecificSettings( QDomDocument & _doc,
 							QDomElement & _parent );

@@ -535,6 +535,13 @@ AutomationPatternView {
 	qproperty-textColor: rgb( 255, 255, 255 );
 }
 
+/* tempo track pattern */
+TempoPatternView {
+	color: #ff99af;
+	qproperty-fgColor: rgb( 255, 204, 215 );
+	qproperty-textColor: rgb( 255, 255, 255 );
+}
+
 /* bb-pattern */
 BBTCOView {
 	color: rgb( 128, 182, 175 ); /* default colour for bb-tracks, used when the colour hasn't been defined by the user */

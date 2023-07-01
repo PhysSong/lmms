@@ -36,13 +36,10 @@ class AutomationPattern;
 class InstrumentTrack;
 class TrackContainerView;
 
-
 class EXPORT TrackContainer : public Model, public JournallingObject
 {
 	Q_OBJECT
 public:
-	typedef QVector<Track *> TrackList;
-
 	TrackContainer();
 	virtual ~TrackContainer();
 

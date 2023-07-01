@@ -32,7 +32,7 @@
 #include "embed.h"
 #include "Engine.h"
 #include "MainWindow.h"
-
+#include "AutomatableModel.h"
 
 
 

@@ -61,6 +61,7 @@
 
 
 
+class AutomationTrack;
 class ControllerConnection;
 
 class EXPORT AutomatableModel : public Model, public JournallingObject
@@ -73,8 +74,7 @@ public:
 	enum ScaleType
 	{
 		Linear,
-		Logarithmic,
-		Decibel
+		Logarithmic
 	};
 
 	enum DataType
@@ -122,6 +122,8 @@ public:
 
 	void setControllerConnection( ControllerConnection* c );
 
+	void setAutomation( AutomationTrack * at );
+	void removeAutomation();
 
 	template<class T>
 	static T castValue( const float v )
@@ -137,17 +139,17 @@ public:
 
 
 	template<class T>
-	inline T value( int frameOffset = 0 ) const
+	inline T value() const
 	{
 		if( unlikely( m_hasLinkedModels || m_controllerConnection != NULL ) )
 		{
-			return castValue<T>( controllerValue( frameOffset ) );
+			return castValue<T>( controllerValue() );
 		}
 
 		return castValue<T>( m_value );
 	}
 
-	float controllerValue( int frameOffset ) const;
+	float controllerValue() const;
 
 	//! @brief Function that returns sample-exact data as a ValueBuffer
 	//! @return pointer to model's valueBuffer when s.ex.data exists, NULL otherwise
@@ -306,6 +308,13 @@ public:
 		s_periodCounter = 0;
 	}
 
+	void setSampleExact( bool s );
+
+	bool isSampleExact() const
+	{
+		return m_isSampleExact;
+	}
+
 	void setStepType( StepType s )
 	{
 		m_stepType = s;
@@ -314,6 +323,16 @@ public:
 	StepType stepType() const
 	{
 		return m_stepType;
+	}
+
+	void setAutomationEnabled( bool b )
+	{
+		m_automationEnabled = b;
+	}
+
+	bool automationEnabled() const
+	{
+		return m_automationEnabled;
 	}
 
 public slots:
@@ -388,12 +407,13 @@ private:
 	long m_lastUpdatedPeriod;
 	static long s_periodCounter;
 	
+	bool m_isSampleExact;
 	bool m_hasSampleExactData;
 	
 	StepType m_stepType;
 
-	// prevent several threads from attempting to write the same vb at the same time
-	QMutex m_valueBufferMutex;
+	bool m_automationEnabled;
+	AutomationTrack * m_automationTrack;
 
 signals:
 	void initValueChanged( float val );
@@ -406,9 +426,9 @@ signals:
 
 
 #define defaultTypedMethods(type)								\
-	type value( int frameOffset = 0 ) const						\
+	type value() const						\
 	{															\
-		return AutomatableModel::value<type>( frameOffset );	\
+		return AutomatableModel::value<type>();	\
 	}															\
 																\
 	type initValue() const										\

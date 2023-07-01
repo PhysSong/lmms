@@ -44,6 +44,7 @@
 #include "SongEditor.h"
 #include "Song.h"
 #include "BandLimitedWave.h"
+#include "TempoTrack.h"
 
 
 bool Engine::s_hasGUI = true;
@@ -65,7 +66,7 @@ Ladspa2LMMS * Engine::s_ladspaManager = NULL;
 DummyTrackContainer * Engine::s_dummyTC = NULL;
 ControllerRackView * Engine::s_controllerRackView = NULL;
 QMap<QString, QString> Engine::s_pluginFileHandling;
-
+TempoTrack * Engine::s_tempoTrack = NULL;
 
 
 
@@ -152,10 +153,57 @@ void Engine::destroy()
 
 void Engine::updateFramesPerTick()
 {
-	s_framesPerTick = s_mixer->processingSampleRate() * 60.0f * 4 /
-				DefaultTicksPerTact / s_song->getTempo();
+	s_framesPerTick = tempoToFramesPerTick( s_song->getTempo() );
 }
 
+
+float Engine::tempoToFramesPerTick( float tempo )
+{
+	return s_mixer->processingSampleRate() * ( 60.0f * 4.0f ) /
+			DefaultTicksPerTact / tempo;
+}
+
+
+float Engine::framesPerTick( tick_t position )
+{
+	if( TempoTrack::s_fptMap->empty() || s_tempoTrack->isMuted() ) // if we have no tempo automation, simply fetch the current fpt value
+	{
+		return s_framesPerTick;
+	}
+	if( TempoTrack::s_fptMap->contains( position ) ) // we have the exact position so get we'll that
+	{
+		return TempoTrack::s_fptMap->value( position );
+	}
+
+	// fetch the nearest tempo from the cached map
+	TimeMap::iterator it = TempoTrack::s_fptMap->lowerBound( position );
+	if( it == TempoTrack::s_fptMap->begin() ) // we're before the first automation point, so ...
+	{
+		return s_song->playbackStartFpt();
+	}
+	return ( it - 1 ).value();
+}
+
+
+float Engine::tempoAt( tick_t position )
+{
+	if( TempoTrack::s_tempoMap->empty() || s_tempoTrack->isMuted() ) // if we have no tempo automation, simply fetch the current tempo widget value
+	{
+		return s_song->getTempo();
+	}
+	if( TempoTrack::s_tempoMap->contains( position ) ) // we have the exact position so get we'll that
+	{
+		return TempoTrack::s_tempoMap->value( position );
+	}
+
+	// fetch the nearest tempo from the cached map
+	TimeMap::iterator it = TempoTrack::s_tempoMap->lowerBound( position );
+	if( it == TempoTrack::s_tempoMap->begin() ) // we're before the first automation point, so ...
+	{
+		return s_song->playbackStartTempo();
+	}
+	return ( it - 1 ).value(); // lowerbound returns the next value after pos, so subtract the pos
+}
 
 
 

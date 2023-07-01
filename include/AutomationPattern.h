@@ -30,12 +30,10 @@
 #include <QtCore/QMap>
 #include <QtCore/QPointer>
 
-#include "Track.h"
+#include "AutomationTrack.h"
+#include "InlineAutomation.h"
 
-
-class AutomationTrack;
 class MidiTime;
-
 
 
 class EXPORT AutomationPattern : public TrackContentObject
@@ -49,14 +47,12 @@ public:
 		CubicHermiteProgression
 	} ;
 
-	typedef QMap<int, float> timeMap;
-	typedef QVector<QPointer<AutomatableModel> > objectVector;
-
-	AutomationPattern( AutomationTrack * _auto_track );
+	AutomationPattern( AutomationTrack * _auto_track, const MidiTime & pos );
 	AutomationPattern( const AutomationPattern & _pat_to_copy );
 	virtual ~AutomationPattern();
 
 	void addObject( AutomatableModel * _obj, bool _search_dup = true );
+	void addInlineObject( InlineAutomation * i );
 
 	const AutomatableModel * firstObject() const;
 
@@ -92,34 +88,34 @@ public:
 		return m_dragging;
 	}
 
-	inline const timeMap & getTimeMap() const
+	inline const TimeMap & getTimeMap() const
 	{
 		return m_timeMap;
 	}
 
-	inline timeMap & getTimeMap()
+	inline TimeMap & getTimeMap()
 	{
 		return m_timeMap;
 	}
 
-	inline const timeMap & getTangents() const
+	inline const TimeMap & getTangents() const
 	{
 		return m_tangents;
 	}
 
-	inline timeMap & getTangents()
+	inline TimeMap & getTangents()
 	{
 		return m_tangents;
 	}
 
 	inline float getMin() const
 	{
-		return firstObject()->minValue<float>();
+		return m_autoTrack->getMin();
 	}
 
 	inline float getMax() const
 	{
-		return firstObject()->maxValue<float>();
+		return m_autoTrack->getMax();
 	}
 
 	inline bool hasAutomation() const
@@ -150,11 +146,7 @@ public:
 
 	virtual TrackContentObjectView * createView( TrackView * _tv );
 
-
-	static bool isAutomated( const AutomatableModel * _m );
 	static QVector<AutomationPattern *> patternsForModel( const AutomatableModel * _m );
-	static AutomationPattern * globalAutomationPattern( AutomatableModel * _m );
-	static void resolveAllIDs();
 
 	bool isRecording() const
 	{
@@ -166,23 +158,37 @@ public:
 		m_isRecording = b;
 	}
 
+	static const float DEFAULT_MIN_VALUE;
+	static const float DEFAULT_MAX_VALUE;
+
+	void setTempoPattern( bool b )
+	{
+		m_isTempoPattern = b;
+	}
+
+	bool isTempoPattern() const
+	{
+		return m_isTempoPattern;
+	}
+
+	void updateTempoMaps();
+	void updateTempoMaps( tick_t start, tick_t end );
+
 public slots:
 	void clear();
 	void openInAutomationEditor();
-	void objectDestroyed( jo_id_t );
+	void scaleTimemapToFit( float oldMin, float oldMax );
 
 private:
-	void cleanObjects();
 	void generateTangents();
-	void generateTangents( timeMap::const_iterator it, int numToGenerate );
-	float valueAt( timeMap::const_iterator v, int offset ) const;
+	void generateTangents( TimeMap::const_iterator it, int numToGenerate );
+	float valueAt( TimeMap::const_iterator v, int offset ) const;
 
 	AutomationTrack * m_autoTrack;
-	QVector<jo_id_t> m_idsToResolve;
-	objectVector m_objects;
-	timeMap m_timeMap;	// actual values
-	timeMap m_oldTimeMap;	// old values for storing the values before setDragValue() is called.
-	timeMap m_tangents;	// slope at each point for calculating spline
+
+	TimeMap m_timeMap;	// actual values
+	TimeMap m_oldTimeMap;	// old values for storing the values before setDragValue() is called.
+	TimeMap m_tangents;	// slope at each point for calculating spline
 	float m_tension;
 	bool m_hasAutomation;
 	ProgressionTypes m_progressionType;
@@ -192,8 +198,9 @@ private:
 	bool m_isRecording;
 	float m_lastRecordedValue;
 
-	static const float DEFAULT_MIN_VALUE;
-	static const float DEFAULT_MAX_VALUE;
+	InlineAutomation * m_inlineObject;
+
+	bool m_isTempoPattern;
 
 	friend class AutomationPatternView;
 

@@ -112,27 +112,19 @@ void AutomationPatternView::disconnectObject( QAction * _a )
 {
 	JournallingObject * j = Engine::projectJournal()->
 				journallingObject( _a->data().toInt() );
-	if( j && dynamic_cast<AutomatableModel *>( j ) )
-	{
-		float oldMin = m_pat->getMin();
-		float oldMax = m_pat->getMax();
 
-		m_pat->m_objects.erase( qFind( m_pat->m_objects.begin(),
-					m_pat->m_objects.end(),
-				dynamic_cast<AutomatableModel *>( j ) ) );
+	AutomationTrack * at = dynamic_cast<AutomationTrack *>( m_pat->getTrack() );
+	AutomatableModel * am = dynamic_cast<AutomatableModel *>( j );
+
+	if( j && am && at )
+	{
+		at->removeObject( am );
 		update();
 
 		//If automation editor is opened, update its display after disconnection
 		if( Engine::automationEditor() )
 		{
 			Engine::automationEditor()->updateAfterPatternChange();
-		}
-
-		//if there is no more connection connected to the AutomationPattern
-		if( m_pat->m_objects.size() == 0 )
-		{
-			//scale the points to fit the new min. and max. value
-			this->scaleTimemapToFit( oldMin, oldMax );
 		}
 	}
 }
@@ -147,6 +139,7 @@ void AutomationPatternView::toggleRecording()
 
 void AutomationPatternView::constructContextMenu( QMenu * _cm )
 {
+	AutomationTrack * at = dynamic_cast<AutomationTrack *>( m_pat->getTrack() );
 	QAction * a = new QAction( embed::getIconPixmap( "automation" ),
 				tr( "Open in Automation editor" ), _cm );
 	_cm->insertAction( _cm->actions()[0], a );
@@ -168,14 +161,14 @@ void AutomationPatternView::constructContextMenu( QMenu * _cm )
 	_cm->addAction( embed::getIconPixmap( "record" ),
 						tr( "Set/clear record" ),
 						this, SLOT( toggleRecording() ) );
-	if( !m_pat->m_objects.isEmpty() )
+	if( at && !at->objects()->isEmpty() )
 	{
 		_cm->addSeparator();
 		QMenu * m = new QMenu( tr( "%1 Connections" ).
-				arg( m_pat->m_objects.count() ), _cm );
-		for( AutomationPattern::objectVector::iterator it =
-						m_pat->m_objects.begin();
-					it != m_pat->m_objects.end(); ++it )
+				arg( at->objects()->count() ), _cm );
+		for( objectVector::iterator it =
+						at->objects()->begin();
+					! at->objects()->end(); ++it )
 		{
 			if( *it )
 			{
@@ -268,8 +261,8 @@ void AutomationPatternView::paintEvent( QPaintEvent * )
 		}
 	}
 
-	const float min = m_pat->firstObject()->minValue<float>();
-	const float max = m_pat->firstObject()->maxValue<float>();
+	const float min = m_pat->getMin();
+	const float max = m_pat->getMax();
 
 	const float y_scale = max - min;
 	const float h = ( height() - 2*TCO_BORDER_WIDTH ) / y_scale;
@@ -283,7 +276,7 @@ void AutomationPatternView::paintEvent( QPaintEvent * )
 	lin2grad.setColorAt( 0.5, fgColor() );
 	lin2grad.setColorAt( 0, fgColor().darker( 150 ) );
 
-	for( AutomationPattern::timeMap::const_iterator it =
+	for( TimeMap::const_iterator it =
 						m_pat->getTimeMap().begin();
 					it != m_pat->getTimeMap().end(); ++it )
 	{
@@ -397,41 +390,3 @@ void AutomationPatternView::dropEvent( QDropEvent * _de )
 		TrackContentObjectView::dropEvent( _de );
 	}
 }
-
-
-
-
-/**
- * @brief Preserves the auto points over different scale
- */
-void AutomationPatternView::scaleTimemapToFit( float oldMin, float oldMax )
-{
-	float newMin = m_pat->getMin();
-	float newMax = m_pat->getMax();
-
-	if( oldMin == newMin && oldMax == newMax )
-	{
-		return;
-	}
-
-	for( AutomationPattern::timeMap::iterator it = m_pat->m_timeMap.begin();
-		it != m_pat->m_timeMap.end(); ++it )
-	{
-		if( *it < oldMin )
-		{
-			*it = oldMin;
-		}
-		else if( *it > oldMax )
-		{
-			*it = oldMax;
-		}
-		*it = (*it-oldMin)*(newMax-newMin)/(oldMax-oldMin)+newMin;
-	}
-
-	m_pat->generateTangents();
-}
-
-
-
-
-

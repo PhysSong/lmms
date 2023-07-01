@@ -69,6 +69,7 @@
 #include "TextFloat.h"
 #include "ToolTip.h"
 #include "TrackContainer.h"
+#include "TempoTrack.h"
 
 
 /*! The width of the resize grip in pixels
@@ -99,12 +100,12 @@ TextFloat * TrackContentObjectView::s_textFloat = NULL;
  *
  * \param _track The track that will contain the new object
  */
-TrackContentObject::TrackContentObject( Track * _track ) :
+TrackContentObject::TrackContentObject( Track * _track, const MidiTime & position ) :
 	Model( _track ),
 	m_track( _track ),
 	m_name( QString::null ),
-	m_startPosition(),
-	m_length(),
+	m_startPosition( position ),
+	m_length( 0 ),
 	m_mutedModel( false, this, tr( "Muted" ) ),
 	m_selectViewOnCreate( false )
 {
@@ -112,9 +113,6 @@ TrackContentObject::TrackContentObject( Track * _track ) :
 	{
 		getTrack()->addTCO( this );
 	}
-	setJournalling( false );
-	movePosition( 0 );
-	changeLength( 0 );
 	setJournalling( true );
 }
 
@@ -146,11 +144,15 @@ TrackContentObject::~TrackContentObject()
  *
  * \param _pos The new position of the track content object.
  */
-void TrackContentObject::movePosition( const MidiTime & _pos )
+void TrackContentObject::movePosition( const MidiTime & pos )
 {
-	if( m_startPosition != _pos )
+	if( m_startPosition != pos )
 	{
-		m_startPosition = _pos;
+		if( m_track && ! m_track->allowsOverlap() && m_track->hasTCOsInRange( pos, pos + m_length - 1, this ) ) // check against overlap
+		{
+				return;
+		}
+		m_startPosition = pos;
 		Engine::getSong()->updateLength();
 	}
 	emit positionChanged();
@@ -161,16 +163,25 @@ void TrackContentObject::movePosition( const MidiTime & _pos )
 
 /*! \brief Change the length of this TrackContentObject
  *
- *  If the track content object's length has chaanged, update it.  We
+ *  If the track content object's length has changed, update it.  We
  *  also add a journal entry for undo and update the display.
  *
  * \param _length The new length of the track content object.
  */
-void TrackContentObject::changeLength( const MidiTime & _length )
+void TrackContentObject::changeLength( const MidiTime & length )
 {
-	if( m_length != _length )
+	if( m_length != length )
 	{
-		m_length = _length;
+		if( m_track && ! m_track->allowsOverlap() && length > m_length ) // if we're increasing the length, we have to check against overlap
+											// but only if we actually have a track - inline automation patterns and other
+											// trackless TCO's get a pass
+		{
+			if( m_track->hasTCOsInRange( m_startPosition, m_startPosition + length - 1, this ) )
+			{
+				return; // bail to prevent overlap
+			}
+		}
+		m_length = length;
 		Engine::getSong()->updateLength();
 	}
 	emit lengthChanged();
@@ -500,7 +511,7 @@ void TrackContentObjectView::dropEvent( QDropEvent * _de )
 	QDomElement tcos = dataFile.content().firstChildElement( "tcos" );
 	m_tco->restoreState( tcos.firstChildElement().firstChildElement() );
 	m_tco->movePosition( pos );
-	AutomationPattern::resolveAllIDs();
+	AutomationTrack::resolveAllIDs();
 	_de->accept();
 }
 
@@ -1285,7 +1296,7 @@ bool TrackContentWidget::canPasteSelection( MidiTime tcoPos, const QMimeData * m
 	const int initialTrackIndex = tiAttr.value().toInt();
 
 	// Get the current track's index
-	const TrackContainer::TrackList tracks = t->trackContainer()->tracks();
+	const TrackList tracks = t->trackContainer()->tracks();
 	const int currentTrackIndex = tracks.indexOf( t );
 
 	// Don't paste if we're on the same tact
@@ -1356,7 +1367,7 @@ bool TrackContentWidget::pasteSelection( MidiTime tcoPos, QDropEvent * _de )
 	MidiTime grabbedTCOTact = MidiTime( grabbedTCOPos.getTact(), 0 );
 
 	// Snap the mouse position to the beginning of the dropped tact, in ticks
-	const TrackContainer::TrackList tracks = getTrack()->trackContainer()->tracks();
+	const TrackList tracks = getTrack()->trackContainer()->tracks();
 	const int currentTrackIndex = tracks.indexOf( getTrack() );
 
 	bool allowRubberband = m_trackView->trackContainerView()->allowRubberband();
@@ -1402,7 +1413,7 @@ bool TrackContentWidget::pasteSelection( MidiTime tcoPos, QDropEvent * _de )
 		}
 	}
 
-	AutomationPattern::resolveAllIDs();
+	AutomationTrack::resolveAllIDs();
 
 	return true;
 }
@@ -1443,12 +1454,12 @@ void TrackContentWidget::mousePressEvent( QMouseEvent * _me )
 	{
 		const MidiTime pos = getPosition( _me->x() ).getTact() *
 						MidiTime::ticksPerTact();
-		TrackContentObject * tco = getTrack()->createTCO( pos );
-
-		tco->saveJournallingState( false );
-		tco->movePosition( pos );
-		tco->restoreJournallingState();
-
+		if( getTrack()->allowsOverlap() || ! getTrack()->hasTCOsInRange( pos, pos, NULL ) )
+		{
+			TrackContentObject * tco = getTrack()->createTCO( pos );
+			tco->saveJournallingState( false );
+			tco->restoreJournallingState();
+		}
 	}
 }
 
@@ -1735,13 +1746,15 @@ void TrackOperationsWidget::updateMenu()
 {
 	QMenu * to_menu = m_trackOps->menu();
 	to_menu->clear();
-	to_menu->addAction( embed::getIconPixmap( "edit_copy", 16, 16 ),
-						tr( "Clone this track" ),
-						this, SLOT( cloneTrack() ) );
-	to_menu->addAction( embed::getIconPixmap( "cancel", 16, 16 ),
-						tr( "Remove this track" ),
-						this, SLOT( removeTrack() ) );
-						
+	if( ! dynamic_cast<TempoTrackView *>( m_trackView ) )
+	{
+		to_menu->addAction( embed::getIconPixmap( "edit_copy", 16, 16 ),
+							tr( "Clone this track" ),
+							this, SLOT( cloneTrack() ) );
+		to_menu->addAction( embed::getIconPixmap( "cancel", 16, 16 ),
+							tr( "Remove this track" ),
+							this, SLOT( removeTrack() ) );
+	}
 	if( ! m_trackView->trackContainerView()->fixedTCOs() )
 	{
 		to_menu->addAction( tr( "Clear this track" ), this, SLOT( clearTrack() ) );
@@ -1750,8 +1763,7 @@ void TrackOperationsWidget::updateMenu()
 	if( dynamic_cast<InstrumentTrackView *>( m_trackView ) )
 	{
 		to_menu->addSeparator();
-		to_menu->addMenu( dynamic_cast<InstrumentTrackView *>(
-						m_trackView )->midiMenu() );
+		to_menu->addMenu( dynamic_cast<InstrumentTrackView *>( m_trackView )->midiMenu() );
 	}
 	if( dynamic_cast<AutomationTrackView *>( m_trackView ) )
 	{
@@ -1766,8 +1778,8 @@ void TrackOperationsWidget::recordingOn()
 	AutomationTrackView * atv = dynamic_cast<AutomationTrackView *>( m_trackView );
 	if( atv )
 	{
-		const Track::tcoVector & tcov = atv->getTrack()->getTCOs();
-		for( Track::tcoVector::const_iterator it = tcov.begin(); it != tcov.end(); it++ )
+		const tcoVector & tcov = atv->getTrack()->getTCOs();
+		for( tcoVector::const_iterator it = tcov.begin(); it != tcov.end(); it++ )
 		{
 			AutomationPattern * ap = dynamic_cast<AutomationPattern *>( *it );
 			if( ap ) { ap->setRecording( true ); }
@@ -1782,8 +1794,8 @@ void TrackOperationsWidget::recordingOff()
 	AutomationTrackView * atv = dynamic_cast<AutomationTrackView *>( m_trackView );
 	if( atv )
 	{
-		const Track::tcoVector & tcov = atv->getTrack()->getTCOs();
-		for( Track::tcoVector::const_iterator it = tcov.begin(); it != tcov.end(); it++ )
+		const tcoVector & tcov = atv->getTrack()->getTCOs();
+		for( tcoVector::const_iterator it = tcov.begin(); it != tcov.end(); it++ )
 		{
 			AutomationPattern * ap = dynamic_cast<AutomationPattern *>( *it );
 			if( ap ) { ap->setRecording( false ); }
@@ -1813,11 +1825,12 @@ Track::Track( TrackTypes _type, TrackContainer * _tc ) :
 	m_type( _type ),                /*!< The track type */
 	m_name(),                       /*!< The track's name */
 	m_mutedModel( false, this, tr( "Muted" ) ),
-					 /*!< For controlling track muting */
+									/*!< For controlling track muting */
 	m_soloModel( false, this, tr( "Solo" ) ),
-					/*!< For controlling track soloing */
+									/*!< For controlling track soloing */
 	m_simpleSerializingMode( false ),
-	m_trackContentObjects()         /*!< The track content objects (segments) */
+	m_trackContentObjects(),		/*!< The track content objects (segments) */
+	m_allowsOverlap( true ) 		/*!< Can TCOs overlap */
 {
 	m_trackContainer->addTrack( this );
 	m_height = -1;
@@ -1864,15 +1877,47 @@ Track * Track::create( TrackTypes _tt, TrackContainer * _tc )
 
 	switch( _tt )
 	{
-		case InstrumentTrack: t = new ::InstrumentTrack( _tc ); break;
-		case BBTrack: t = new ::BBTrack( _tc ); break;
-		case SampleTrack: t = new ::SampleTrack( _tc ); break;
+		case InstrumentTrack:
+		{
+			t = new ::InstrumentTrack( _tc );
+			break;
+		}
+		case BBTrack:
+		{
+			t = new ::BBTrack( _tc );
+			break;
+		}
+		case SampleTrack:
+		{
+			t = new ::SampleTrack( _tc );
+			break;
+		}
 //		case EVENT_TRACK:
 //		case VIDEO_TRACK:
-		case AutomationTrack: t = new ::AutomationTrack( _tc ); break;
+		case AutomationTrack:
+		{
+			t = new ::AutomationTrack( _tc );
+			t->setAllowsOverlap( false );
+			break;
+		}
 		case HiddenAutomationTrack:
-						t = new ::AutomationTrack( _tc, true ); break;
-		default: break;
+		{
+			t = new ::AutomationTrack( _tc, true );
+			t->setAllowsOverlap( false );
+			break;
+		}
+		case TempoTrack:
+		{
+			::TempoTrack * tt = new ::TempoTrack( _tc );
+			Engine::setTempoTrack( tt );
+			t = tt;
+			t->setAllowsOverlap( false );
+			break;
+		}
+		default:
+		{
+			break;
+		}
 	}
 
 	_tc->updateAfterTrackAdd();
@@ -2180,6 +2225,11 @@ void Track::getTCOsInRange( tcoVector & _tco_v, const MidiTime & _start,
 				it_o != m_trackContentObjects.end(); ++it_o )
 	{
 		TrackContentObject * tco = ( *it_o );
+		if( tco->length() <= 0 ) // get rid of 0-length patterns
+		{
+			tco->deleteLater();
+			continue;
+		}
 		int s = tco->startPosition();
 		int e = tco->endPosition();
 		if( ( s <= _end ) && ( e >= _start ) )
@@ -2207,6 +2257,29 @@ void Track::getTCOsInRange( tcoVector & _tco_v, const MidiTime & _start,
 	}
 }
 
+
+/**
+ * @brief Test whether the track has TCOs in given range
+ * @param start Start of range
+ * @param end End of range
+ * @param otherThan Exclude this TCO from the test
+ */
+bool Track::hasTCOsInRange( const MidiTime & start, const MidiTime & end, TrackContentObject * otherThan )
+{
+	for( tcoVector::iterator it_o = m_trackContentObjects.begin();
+				it_o != m_trackContentObjects.end(); ++it_o )
+	{
+		TrackContentObject * tco = ( *it_o );
+		if( tco == otherThan || tco->length() <= 0 ) { continue; } // excluded TCO or no-length, skip to next
+		int s = tco->startPosition();
+		int e = tco->endPosition();
+		if( ( s <= end ) && ( e >= start ) )
+		{
+			return true;
+		}
+	}
+	return false;
+}
 
 
 
@@ -2313,10 +2386,10 @@ tact_t Track::length() const
  */
 void Track::toggleSolo()
 {
-	const TrackContainer::TrackList & tl = m_trackContainer->tracks();
+	const TrackList & tl = m_trackContainer->tracks();
 
 	bool solo_before = false;
-	for( TrackContainer::TrackList::const_iterator it = tl.begin();
+	for( TrackList::const_iterator it = tl.begin();
 							it != tl.end(); ++it )
 	{
 		if( *it != this )
@@ -2330,7 +2403,7 @@ void Track::toggleSolo()
 	}
 
 	const bool solo = m_soloModel.value();
-	for( TrackContainer::TrackList::const_iterator it = tl.begin();
+	for( TrackList::const_iterator it = tl.begin();
 							it != tl.end(); ++it )
 	{
 		if( solo )
@@ -2414,7 +2487,7 @@ TrackView::TrackView( Track * _track, TrackContainerView * _tcv ) :
 	connect( &m_track->m_soloModel, SIGNAL( dataChanged() ),
 			m_track, SLOT( toggleSolo() ) );
 	// create views for already existing TCOs
-	for( Track::tcoVector::iterator it =
+	for( tcoVector::iterator it =
 					m_track->m_trackContentObjects.begin();
 			it != m_track->m_trackContentObjects.end(); ++it )
 	{

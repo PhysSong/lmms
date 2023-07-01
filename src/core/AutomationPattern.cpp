@@ -37,36 +37,46 @@
 #include "Song.h"
 #include "TextFloat.h"
 #include "embed.h"
+#include "TempoTrack.h"
 
 
 const float AutomationPattern::DEFAULT_MIN_VALUE = 0;
 const float AutomationPattern::DEFAULT_MAX_VALUE = 1;
 
 
-AutomationPattern::AutomationPattern( AutomationTrack * _auto_track ) :
-	TrackContentObject( _auto_track ),
-	m_autoTrack( _auto_track ),
-	m_objects(),
+AutomationPattern::AutomationPattern( AutomationTrack * auto_track, const MidiTime & pos ) :
+	TrackContentObject( auto_track, pos ),
+	m_autoTrack( auto_track ),
 	m_tension( 1.0 ),
 	m_progressionType( DiscreteProgression ),
 	m_dragging( false ),
 	m_isRecording( false ),
-	m_lastRecordedValue( 0 )
+	m_lastRecordedValue( 0 ),
+	m_inlineObject( NULL ),
+	m_isTempoPattern( false )
 {
 	changeLength( MidiTime( 1, 0 ) );
+
+	if( m_autoTrack && ! m_autoTrack->objects()->isEmpty() )
+	{
+		const AutomatableModel * obj = firstObject();
+		putValue( MidiTime(0), obj->inverseScaledValue( obj->value<float>() ), false );
+	}
 }
 
 
-
-
 AutomationPattern::AutomationPattern( const AutomationPattern & _pat_to_copy ) :
-	TrackContentObject( _pat_to_copy.m_autoTrack ),
+	TrackContentObject( _pat_to_copy.m_autoTrack, MidiTime( 0 ) ),
 	m_autoTrack( _pat_to_copy.m_autoTrack ),
-	m_objects( _pat_to_copy.m_objects ),
 	m_tension( _pat_to_copy.m_tension ),
-	m_progressionType( _pat_to_copy.m_progressionType )
+	m_progressionType( _pat_to_copy.m_progressionType ),
+	m_dragging( false ),
+	m_isRecording( _pat_to_copy.m_isRecording ),
+	m_lastRecordedValue( _pat_to_copy.m_lastRecordedValue ),
+	m_inlineObject( _pat_to_copy.m_inlineObject ),
+	m_isTempoPattern( _pat_to_copy.m_isTempoPattern )
 {
-	for( timeMap::const_iterator it = _pat_to_copy.m_timeMap.begin();
+	for( TimeMap::const_iterator it = _pat_to_copy.m_timeMap.begin();
 				it != _pat_to_copy.m_timeMap.end(); ++it )
 	{
 		m_timeMap[it.key()] = it.value();
@@ -89,40 +99,29 @@ AutomationPattern::~AutomationPattern()
 
 
 
-void AutomationPattern::addObject( AutomatableModel * _obj, bool _search_dup )
+void AutomationPattern::addObject( AutomatableModel * obj, bool search_dup )
 {
-	if( _search_dup )
-	{
-		for( objectVector::iterator it = m_objects.begin();
-					it != m_objects.end(); ++it )
-		{
-			if( *it == _obj )
-			{
-				TextFloat::displayMessage( _obj->displayName(), tr( "Model is already connected "
-												"to this pattern." ), embed::getIconPixmap( "automation" ), 2000 );
-				return;
-			}
-		}
-	}
+	if( m_isTempoPattern ) { return; } // no adding objects to tempo patterns
+	m_autoTrack->addObject( obj, search_dup );
 
-	// the automation track is unconnected and there is nothing in the track
-	if( m_objects.isEmpty() && hasAutomation() == false )
+	// if there is nothing in the pattern..
+	if( hasAutomation() == false )
 	{
 		// then initialize first value
-		putValue( MidiTime(0), _obj->inverseScaledValue( _obj->value<float>() ), false );
+		putValue( MidiTime(0), obj->inverseScaledValue( obj->value<float>() ), false );
 	}
-
-	m_objects += _obj;
-
-	connect( _obj, SIGNAL( destroyed( jo_id_t ) ),
-			this, SLOT( objectDestroyed( jo_id_t ) ),
-						Qt::DirectConnection );
-
-	emit dataChanged();
-
 }
 
 
+void AutomationPattern::addInlineObject( InlineAutomation * i )
+{
+	if( m_isTempoPattern ) { return; } // no adding objects to tempo patterns
+	m_inlineObject = i;
+	if( hasAutomation() == false )
+	{
+		putValue( MidiTime(0), i->inverseScaledValue( i->value() ), false );
+	}
+}
 
 
 void AutomationPattern::setProgressionType(
@@ -134,6 +133,10 @@ void AutomationPattern::setProgressionType(
 	{
 		m_progressionType = _new_progression_type;
 		emit dataChanged();
+		if( m_isTempoPattern )
+		{
+			updateTempoMaps();
+		}
 	}
 }
 
@@ -156,14 +159,7 @@ void AutomationPattern::setTension( QString _new_tension )
 
 const AutomatableModel * AutomationPattern::firstObject() const
 {
-	AutomatableModel * m;
-	if( !m_objects.isEmpty() && ( m = m_objects.first() ) != NULL )
-	{
-		return m;
-	}
-
-	static FloatModel _fm( 0, DEFAULT_MIN_VALUE, DEFAULT_MAX_VALUE, 0.001 );
-	return &_fm;
+	return m_autoTrack->firstObject();
 }
 
 
@@ -173,7 +169,7 @@ const AutomatableModel * AutomationPattern::firstObject() const
 MidiTime AutomationPattern::length() const
 {
 	if( m_timeMap.isEmpty() ) return 0;
-	timeMap::const_iterator it = m_timeMap.end();	
+	TimeMap::const_iterator it = m_timeMap.end();
 	return MidiTime( qMax( MidiTime( (it-1).key() ).getTact() + 1, 1 ), 0 );
 }
 
@@ -184,18 +180,27 @@ MidiTime AutomationPattern::putValue( const MidiTime & _time,
 							const float _value,
 							const bool _quant_pos )
 {
-	cleanObjects();
-
 	MidiTime newTime = _quant_pos && Engine::automationEditor() ?
 		Note::quantized( _time,
 			Engine::automationEditor()->quantization() ) :
 		_time;
 
 	m_timeMap[newTime] = _value;
-	timeMap::const_iterator it = m_timeMap.find( newTime );
+	TimeMap::const_iterator it = m_timeMap.find( newTime );
 	if( it != m_timeMap.begin() )
 	{
 		it--;
+	}
+	if( m_isTempoPattern ) // if we're a tempo pattern, update the cached tempo maps
+	{
+		if( (it+2) != m_timeMap.end() )
+		{
+			updateTempoMaps( it.key(), qMin<int>( (it+2).key(), endPosition() ) );
+		}
+		else
+		{
+			updateTempoMaps( it.key(), endPosition() );
+		}
 	}
 	generateTangents(it, 3);
 
@@ -217,8 +222,6 @@ MidiTime AutomationPattern::putValue( const MidiTime & _time,
 void AutomationPattern::removeValue( const MidiTime & _time,
 									 const bool _quant_pos )
 {
-	cleanObjects();
-
 	MidiTime newTime = _quant_pos && Engine::automationEditor() ?
 		Note::quantized( _time,
 			Engine::automationEditor()->quantization() ) :
@@ -226,10 +229,21 @@ void AutomationPattern::removeValue( const MidiTime & _time,
 
 	m_timeMap.remove( newTime );
 	m_tangents.remove( newTime );
-	timeMap::const_iterator it = m_timeMap.lowerBound( newTime );
+	TimeMap::const_iterator it = m_timeMap.lowerBound( newTime );
 	if( it != m_timeMap.begin() )
 	{
 		it--;
+	}
+	if( m_isTempoPattern ) // if we're a tempo pattern, update the cached tempo maps
+	{
+		if( (it+2) != m_timeMap.end() )
+		{
+			updateTempoMaps( it.key(), qMin<int>( (it+2).key(), endPosition() ) );
+		}
+		else
+		{
+			updateTempoMaps( it.key(), endPosition() );
+		}
 	}
 	generateTangents(it, 3);
 
@@ -271,7 +285,7 @@ MidiTime AutomationPattern::setDragValue( const MidiTime & _time, const float _v
 	//Restore to the state before it the point were being dragged
 	m_timeMap = m_oldTimeMap;
 
-	for( timeMap::const_iterator it = m_timeMap.begin(); it != m_timeMap.end(); it++ )
+	for( TimeMap::const_iterator it = m_timeMap.begin(); it != m_timeMap.end(); it++ )
 	{
 		generateTangents(it, 3);
 	}
@@ -308,7 +322,7 @@ float AutomationPattern::valueAt( const MidiTime & _time ) const
 
 	// lowerBound returns next value with greater key, therefore we take
 	// the previous element to get the current value
-	timeMap::ConstIterator v = m_timeMap.lowerBound( _time );
+	TimeMap::ConstIterator v = m_timeMap.lowerBound( _time );
 
 	if( v == m_timeMap.begin() )
 	{
@@ -325,7 +339,7 @@ float AutomationPattern::valueAt( const MidiTime & _time ) const
 
 
 
-float AutomationPattern::valueAt( timeMap::const_iterator v, int offset ) const
+float AutomationPattern::valueAt( TimeMap::const_iterator v, int offset ) const
 {
 	if( m_progressionType == DiscreteProgression || v == m_timeMap.end() )
 	{
@@ -364,7 +378,7 @@ float AutomationPattern::valueAt( timeMap::const_iterator v, int offset ) const
 
 float *AutomationPattern::valuesAfter( const MidiTime & _time ) const
 {
-	timeMap::ConstIterator v = m_timeMap.lowerBound( _time );
+	TimeMap::ConstIterator v = m_timeMap.lowerBound( _time );
 	if( v == m_timeMap.end() || (v+1) == m_timeMap.end() )
 	{
 		return NULL;
@@ -392,7 +406,7 @@ void AutomationPattern::saveSettings( QDomDocument & _doc, QDomElement & _this )
 	_this.setAttribute( "prog", QString::number( progressionType() ) );
 	_this.setAttribute( "tens", QString::number( getTension() ) );
 
-	for( timeMap::const_iterator it = m_timeMap.begin();
+	for( TimeMap::const_iterator it = m_timeMap.begin();
 						it != m_timeMap.end(); ++it )
 	{
 		QDomElement element = _doc.createElement( "time" );
@@ -401,16 +415,7 @@ void AutomationPattern::saveSettings( QDomDocument & _doc, QDomElement & _this )
 		_this.appendChild( element );
 	}
 
-	for( objectVector::const_iterator it = m_objects.begin();
-						it != m_objects.end(); ++it )
-	{
-		if( *it )
-		{
-			QDomElement element = _doc.createElement( "object" );
-			element.setAttribute( "id", ( *it )->id() );
-			_this.appendChild( element );
-		}
-	}
+	if( m_isTempoPattern ) { _this.setAttribute( "istempopattern", 1 ); }
 }
 
 
@@ -439,10 +444,6 @@ void AutomationPattern::loadSettings( const QDomElement & _this )
 			m_timeMap[element.attribute( "pos" ).toInt()]
 				= element.attribute( "value" ).toFloat();
 		}
-		else if( element.tagName() == "object" )
-		{
-			m_idsToResolve << element.attribute( "id" ).toInt();
-		}
 	}
 
 	int len = _this.attribute( "len" ).toInt();
@@ -450,8 +451,16 @@ void AutomationPattern::loadSettings( const QDomElement & _this )
 	{
 		len = length();
 	}
+
+	if( _this.hasAttribute( "istempopattern" ) )
+	{
+		m_isTempoPattern = true;
+	}
+
 	changeLength( len );
 	generateTangents();
+
+	if( m_isTempoPattern ) { updateTempoMaps(); }
 }
 
 
@@ -459,14 +468,21 @@ void AutomationPattern::loadSettings( const QDomElement & _this )
 
 const QString AutomationPattern::name() const
 {
-	if( !TrackContentObject::name().isEmpty() )
+	if( ! TrackContentObject::name().isEmpty() )
 	{
 		return TrackContentObject::name();
 	}
-	if( !m_objects.isEmpty() && m_objects.first() != NULL )
+
+	if( m_autoTrack->name() != m_autoTrack->defaultName() )
 	{
-		return m_objects.first()->fullDisplayName();
+		return m_autoTrack->name();
 	}
+
+	if( m_isTempoPattern )
+	{
+		return tr( "Tempo automation" );
+	}
+
 	return tr( "Drag a control while pressing <Ctrl>" );
 }
 
@@ -480,8 +496,12 @@ void AutomationPattern::processMidiTime( const MidiTime & time )
 		if( time >= 0 && hasAutomation() )
 		{
 			const float val = valueAt( time );
-			for( objectVector::iterator it = m_objects.begin();
-							it != m_objects.end(); ++it )
+			if( m_inlineObject )
+			{
+				m_inlineObject->setAutomatedValue( val );
+			}
+			else for( objectVector::iterator it = m_autoTrack->objects()->begin();
+							it != m_autoTrack->objects()->end(); ++it )
 			{
 				if( *it )
 				{
@@ -493,9 +513,9 @@ void AutomationPattern::processMidiTime( const MidiTime & time )
 	}
 	else
 	{
-		if( time >= 0 && ! m_objects.isEmpty() )
+		if( time >= 0 && ! m_autoTrack->objects()->isEmpty() )
 		{
-			const float value = static_cast<float>( firstObject()->value<float>() );
+			const float value = firstObject()->value<float>();
 			if( value != m_lastRecordedValue ) 
 			{
 				putValue( time, value, true );
@@ -520,150 +540,49 @@ TrackContentObjectView * AutomationPattern::createView( TrackView * _tv )
 
 
 
-bool AutomationPattern::isAutomated( const AutomatableModel * _m )
-{
-	TrackContainer::TrackList l;
-	l += Engine::getSong()->tracks();
-	l += Engine::getBBTrackContainer()->tracks();
-	l += Engine::getSong()->globalAutomationTrack();
-
-	for( TrackContainer::TrackList::ConstIterator it = l.begin(); it != l.end(); ++it )
-	{
-		if( ( *it )->type() == Track::AutomationTrack ||
-			( *it )->type() == Track::HiddenAutomationTrack )
-		{
-			const Track::tcoVector & v = ( *it )->getTCOs();
-			for( Track::tcoVector::ConstIterator j = v.begin(); j != v.end(); ++j )
-			{
-				const AutomationPattern * a = dynamic_cast<const AutomationPattern *>( *j );
-				if( a && a->hasAutomation() )
-				{
-					for( objectVector::const_iterator k = a->m_objects.begin(); k != a->m_objects.end(); ++k )
-					{
-						if( *k == _m )
-						{
-							return true;
-						}
-					}
-				}
-			}
-		}
-	}
-	return false;
-}
-
-
-/*! \brief returns a list of all the automation patterns everywhere that are connected to a specific model
+/*! \brief returns a list of all the automation patterns of the track that are connected to a specific model
  *  \param _m the model we want to look for
  */
 QVector<AutomationPattern *> AutomationPattern::patternsForModel( const AutomatableModel * _m )
 {
 	QVector<AutomationPattern *> patterns;
-	TrackContainer::TrackList l;
+	TrackList l;
 	l += Engine::getSong()->tracks();
 	l += Engine::getBBTrackContainer()->tracks();
-	l += Engine::getSong()->globalAutomationTrack();
 	
 	// go through all tracks...
-	for( TrackContainer::TrackList::ConstIterator it = l.begin(); it != l.end(); ++it )
+	for( TrackList::ConstIterator it = l.begin(); it != l.end(); ++it )
 	{
 		// we want only automation tracks...
 		if( ( *it )->type() == Track::AutomationTrack ||
 			( *it )->type() == Track::HiddenAutomationTrack )
 		{
-			// get patterns in those tracks....
-			const Track::tcoVector & v = ( *it )->getTCOs();
-			// go through all the patterns...
-			for( Track::tcoVector::ConstIterator j = v.begin(); j != v.end(); ++j )
+			AutomationTrack * at = dynamic_cast<AutomationTrack *>( *it );
+			if( at )
 			{
-				AutomationPattern * a = dynamic_cast<AutomationPattern *>( *j );
-				// check that the pattern has automation
-				if( a && a->hasAutomation() )
+				// check the track for the object we want
+				for( objectVector::const_iterator k = at->objects()->begin(); k != at->objects()->end(); ++k )
 				{
-					// now check is the pattern is connected to the model we want by going through all the connections
-					// of the pattern
-					bool has_object = false;
-					for( objectVector::const_iterator k = a->m_objects.begin(); k != a->m_objects.end(); ++k )
+					if( *k == _m )
 					{
-						if( *k == _m )
+						// found, so return patterns of the track
+						const tcoVector & v = ( *it )->getTCOs();
+						for( tcoVector::ConstIterator j = v.begin(); j != v.end(); ++j )
 						{
-							has_object = true;
+							AutomationPattern * a = dynamic_cast<AutomationPattern *>( *j );
+							// check that the pattern has automation
+							if( a && a->hasAutomation() )
+							{
+								patterns += a;
+							}
 						}
+						break;
 					}
-					// if the patterns is connected to the model, add it to the list
-					if( has_object ) { patterns += a; }
 				}
 			}
 		}
 	}
 	return patterns;
-}
-
-
-
-AutomationPattern * AutomationPattern::globalAutomationPattern(
-							AutomatableModel * _m )
-{
-	AutomationTrack * t = Engine::getSong()->globalAutomationTrack();
-	Track::tcoVector v = t->getTCOs();
-	for( Track::tcoVector::const_iterator j = v.begin(); j != v.end(); ++j )
-	{
-		AutomationPattern * a = dynamic_cast<AutomationPattern *>( *j );
-		if( a )
-		{
-			for( objectVector::const_iterator k = a->m_objects.begin();
-												k != a->m_objects.end(); ++k )
-			{
-				if( *k == _m )
-				{
-					return a;
-				}
-			}
-		}
-	}
-
-	AutomationPattern * a = new AutomationPattern( t );
-	a->addObject( _m, false );
-	return a;
-}
-
-
-
-
-void AutomationPattern::resolveAllIDs()
-{
-	TrackContainer::TrackList l = Engine::getSong()->tracks() +
-				Engine::getBBTrackContainer()->tracks();
-	l += Engine::getSong()->globalAutomationTrack();
-	for( TrackContainer::TrackList::iterator it = l.begin();
-							it != l.end(); ++it )
-	{
-		if( ( *it )->type() == Track::AutomationTrack ||
-			 ( *it )->type() == Track::HiddenAutomationTrack )
-		{
-			Track::tcoVector v = ( *it )->getTCOs();
-			for( Track::tcoVector::iterator j = v.begin();
-							j != v.end(); ++j )
-			{
-				AutomationPattern * a = dynamic_cast<AutomationPattern *>( *j );
-				if( a )
-				{
-					for( QVector<jo_id_t>::Iterator k = a->m_idsToResolve.begin();
-									k != a->m_idsToResolve.end(); ++k )
-					{
-						JournallingObject * o = Engine::projectJournal()->
-														journallingObject( *k );
-						if( o && dynamic_cast<AutomatableModel *>( o ) )
-						{
-							a->addObject( dynamic_cast<AutomatableModel *>( o ), false );
-						}
-					}
-					a->m_idsToResolve.clear();
-					a->dataChanged();
-				}
-			}
-		}
-	}
 }
 
 
@@ -681,6 +600,8 @@ void AutomationPattern::clear()
 	{
 		Engine::automationEditor()->update();
 	}
+
+	if( m_isTempoPattern ) { updateTempoMaps(); }
 }
 
 
@@ -696,50 +617,6 @@ void AutomationPattern::openInAutomationEditor()
 
 
 
-void AutomationPattern::objectDestroyed( jo_id_t _id )
-{
-	// TODO: distict between temporary removal (e.g. LADSPA controls
-	// when switching samplerate) and real deletions because in the latter
-	// case we had to remove ourselves if we're the global automation
-	// pattern of the destroyed object
-	m_idsToResolve += _id;
-
-	for( objectVector::Iterator objIt = m_objects.begin();
-		objIt != m_objects.end(); objIt++ )
-	{
-		Q_ASSERT( !(*objIt).isNull() );
-		if( (*objIt)->id() == _id )
-		{
-			//Assign to objIt so that this loop work even break; is removed.
-			objIt = m_objects.erase( objIt );
-			break;
-		}
-	}
-
-	emit dataChanged();
-}
-
-
-
-
-void AutomationPattern::cleanObjects()
-{
-	for( objectVector::iterator it = m_objects.begin(); it != m_objects.end(); )
-	{
-		if( *it )
-		{
-			++it;
-		}
-		else
-		{
-			it = m_objects.erase( it );
-		}
-	}
-}
-
-
-
-
 void AutomationPattern::generateTangents()
 {
 	generateTangents(m_timeMap.begin(), m_timeMap.size());
@@ -748,7 +625,7 @@ void AutomationPattern::generateTangents()
 
 
 
-void AutomationPattern::generateTangents( timeMap::const_iterator it,
+void AutomationPattern::generateTangents( TimeMap::const_iterator it,
 							int numToGenerate )
 {
 	if( m_timeMap.size() < 2 )
@@ -782,5 +659,85 @@ void AutomationPattern::generateTangents( timeMap::const_iterator it,
 
 
 
+/**
+ * @brief Preserves the auto points over different scale
+ */
+void AutomationPattern::scaleTimemapToFit( float oldMin, float oldMax )
+{
+	float newMin = getMin();
+	float newMax = getMax();
+
+	if( oldMin == newMin && oldMax == newMax )
+	{
+		return;
+	}
+
+	for( TimeMap::iterator it = m_timeMap.begin();
+		it != m_timeMap.end(); ++it )
+	{
+		if( *it < oldMin )
+		{
+			*it = oldMin;
+		}
+		else if( *it > oldMax )
+		{
+			*it = oldMax;
+		}
+		*it = (*it-oldMin)*(newMax-newMin)/(oldMax-oldMin)+newMin;
+	}
+
+	generateTangents();
+}
 
 
+/**
+ * @brief Updates the cached tempo & fpt values with the values in this pattern
+ */
+void AutomationPattern::updateTempoMaps()
+{
+	updateTempoMaps( startPosition(), endPosition() );
+}
+void AutomationPattern::updateTempoMaps( tick_t start, tick_t end )
+{
+	TimeMap * tm = TempoTrack::s_tempoMap;
+	TimeMap * fm = TempoTrack::s_fptMap;
+
+	if( ! hasAutomation() ) // clear maps from the area of this pattern
+	{
+		for( int i = start; i < end; ++i )
+		{
+			tm->remove( i );
+			fm->remove( i );
+		}
+		return;
+	}
+
+	if( m_progressionType == DiscreteProgression ) // discrete, so we only need the values of the points
+	{
+		for( int i = start; i < end; ++i )
+		{
+			const int j = i - startPosition();
+			if( m_timeMap.contains( j ) )
+			{
+				const float val = roundf( m_timeMap.value( j ) );
+				tm->insert( i, val );
+				fm->insert( i, Engine::tempoToFramesPerTick( val ) );
+			}
+			else
+			{
+				tm->remove( i );
+				fm->remove( i );
+			}
+		}
+		return;
+	}
+
+	// linear or cubic progression, so we need all the in-between values too
+	for( int i = start; i < end; ++i )
+	{
+		const int j = i - startPosition();
+		const float val = roundf( valueAt( j ) );
+		tm->insert( i, val );
+		fm->insert( i, Engine::tempoToFramesPerTick( val ) );
+	}
+}

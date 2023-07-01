@@ -150,6 +150,23 @@ ValueBuffer * LadspaControl::valueBuffer()
 }
 
 
+void LadspaControl::setSampleExact( bool s )
+{
+	switch( m_port->data_type )
+	{
+		case TOGGLED:
+		case INTEGER:
+			return;
+		case FLOATING:
+			m_knobModel.setSampleExact( s );
+		case TIME:
+			m_tempoSyncKnobModel.setSampleExact( s );
+		default:
+			qWarning( "LadspaControl::setSampleExact: BAD BAD BAD\n" );
+			break;
+	}
+}
+
 
 void LadspaControl::setValue( LADSPA_Data _value )
 {
@@ -215,15 +232,6 @@ void LadspaControl::loadSettings( const QDomElement& parent, const QString& name
 	QString dataModelName = "data";
 	QString linkModelName = "link";
 	QDomElement e = parent.namedItem( name ).toElement();
-
-	// COMPAT < 1.0.0: detect old data format where there's either no dedicated sub
-	// element or there's a direct sub element with automation link information
-	if( e.isNull() || e.hasAttribute( "id" ) )
-	{
-		dataModelName = name;
-		linkModelName = name + "link";
-		e = parent;
-	}
 
 	if( m_link )
 	{

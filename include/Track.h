@@ -39,7 +39,7 @@
 #include "AutomatableModel.h"
 #include "ModelView.h"
 #include "DataFile.h"
-
+#include "ProcessHandle.h"
 
 class QMenu;
 class QPushButton;
@@ -54,6 +54,7 @@ class TrackContentWidget;
 class TrackView;
 
 typedef QWidget trackSettingsWidget;
+typedef QVector<Track *> TrackList;
 
 const int DEFAULT_SETTINGS_WIDGET_WIDTH = 224;
 const int TRACK_OP_WIDTH = 78;
@@ -80,7 +81,7 @@ class TrackContentObject : public Model, public JournallingObject
 	mapPropertyFromModel(bool,isMuted,setMuted,m_mutedModel);
 	mapPropertyFromModel(bool,isSolo,setSolo,m_soloModel);
 public:
-	TrackContentObject( Track * _track );
+	TrackContentObject( Track * _track, const MidiTime & position );
 	virtual ~TrackContentObject();
 
 	inline Track * getTrack() const
@@ -113,7 +114,7 @@ public:
 	inline MidiTime endPosition() const
 	{
 		const int sp = m_startPosition;
-		return sp + m_length;
+		return sp + m_length - 1;
 	}
 
 	inline const MidiTime & length() const
@@ -401,7 +402,7 @@ signals:
 
 
 
-
+typedef QVector<TrackContentObject *> tcoVector;
 
 // base-class for all tracks
 class EXPORT Track : public Model, public JournallingObject
@@ -422,6 +423,8 @@ public:
 		VideoTrack,
 		AutomationTrack,
 		HiddenAutomationTrack,
+		TempoTrack,
+		CommentTrack,
 		NumTrackTypes
 	} ;
 
@@ -439,6 +442,8 @@ public:
 	{
 		return m_type;
 	}
+
+	virtual ProcessHandle * getProcessHandle() = 0;
 
 	virtual bool play( const MidiTime & _start, const fpp_t _frames,
 						const f_cnt_t _frame_base, int _tco_num = -1 ) = 0;
@@ -476,6 +481,7 @@ public:
 	}
 	void getTCOsInRange( tcoVector & _tco_v, const MidiTime & _start,
 							const MidiTime & _end );
+	bool hasTCOsInRange( const MidiTime & start, const MidiTime & end, TrackContentObject * otherThan = NULL );
 	void swapPositionOfTCOs( int _tco_num1, int _tco_num2 );
 
 
@@ -523,6 +529,16 @@ public:
 		return m_processingLock.tryLock();
 	}
 
+	bool allowsOverlap() const
+	{
+		return m_allowsOverlap;
+	}
+
+	void setAllowsOverlap( bool b )
+	{
+		m_allowsOverlap = b;
+	}
+
 public slots:
 	virtual void setName( const QString & _new_name )
 	{
@@ -548,6 +564,8 @@ private:
 	tcoVector m_trackContentObjects;
 
 	QMutex m_processingLock;
+
+	bool m_allowsOverlap;
 
 	friend class TrackView;
 

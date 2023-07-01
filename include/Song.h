@@ -44,6 +44,7 @@ const bpm_t DefaultTempo = 140;
 const bpm_t MaxTempo = 999;
 const tick_t MaxSongLength = 9999 * DefaultTicksPerTact;
 
+typedef QHash< tick_t, f_cnt_t > TickOffsetHash;
 
 class EXPORT Song : public TrackContainer
 {
@@ -97,12 +98,9 @@ public:
 
 	inline int getMilliseconds() const
 	{
-		return m_elapsedMilliSeconds;
+		return (int) elapsedMilliSeconds();
 	}
-	inline void setMilliSeconds( float _ellapsedMilliSeconds )
-	{
-		m_elapsedMilliSeconds = (_ellapsedMilliSeconds);
-	}
+
 	inline int getTacts() const
 	{
 		return currentTact();
@@ -200,13 +198,8 @@ public:
 	}
 
 
-	bpm_t getTempo();
+	float getTempo();
 	virtual AutomationPattern * tempoAutomationPattern();
-
-	AutomationTrack * globalAutomationTrack()
-	{
-		return m_globalAutomationTrack;
-	}
 
 	// file management
 	void createNewProject();
@@ -256,6 +249,53 @@ public:
 		return m_timeSigModel;
 	}
 
+	// returns the tick position at the start of current period
+	tick_t periodStartTick() const
+	{
+		return m_periodStartPos[ m_playMode ].getTicks();
+	}
+
+	// returns the frame offset of the tick position at the start of current period
+	float periodStartTickFrame() const
+	{
+		return m_periodStartPos[ m_playMode ].currentFrame();
+	}
+
+	// returns a hash of the ticks happening during current period, paired with their respective frameoffsets
+	TickOffsetHash * ticksThisPeriod()
+	{
+		return &m_ticksThisPeriod;
+	}
+
+	// returns the tco number to play, for tracks
+	int playingTcoNum() const
+	{
+		return m_playingTcoNum;
+	}
+
+	// tracks that need playing
+	TrackList * playingTrackList()
+	{
+		return &m_trackList;
+	}
+
+	inline float playbackStartTempo() const
+	{
+		return m_playbackStartTempo;
+	}
+
+	inline float playbackStartFpt() const
+	{
+		return m_playbackStartFpt;
+	}
+
+	// for use in other parts of the software that need to know the tempo...
+	// return the actual currently used tempo
+	float actualTempo() const;
+	// return the actual currently used fpt-value
+	float actualFpt() const;
+
+	float elapsedMilliSeconds() const;
 
 public slots:
 	void playSong();
@@ -326,8 +366,6 @@ private:
 	void restoreControllerStates( const QDomElement & _this );
 
 
-	AutomationTrack * m_globalAutomationTrack;
-
 	IntModel m_tempoModel;
 	MeterModel m_timeSigModel;
 	int m_oldTicksPerTact;
@@ -350,19 +388,28 @@ private:
 	bool m_loadingProject;
 
 	PlayModes m_playMode;
-	playPos m_playPos[Mode_Count];
+	playPos m_playPos [Mode_Count];
+	playPos m_periodStartPos [Mode_Count];
 	tact_t m_length;
+
+	TickOffsetHash m_ticksThisPeriod;
+
+	volatile int m_playingTcoNum;	// tco num parameter for tracks when playing a single tco
+	TrackList m_trackList;
 
 	Track * m_trackToPlay;
 	Pattern* m_patternToPlay;
 	bool m_loopPattern;
 
-	double m_elapsedMilliSeconds;
+	unsigned long m_elapsedFrames;
 	tick_t m_elapsedTicks;
 	tact_t m_elapsedTacts;
 
 	VstSyncController m_vstSyncController;
 
+	float m_playbackStartTempo;
+	float m_playbackStartFpt;
+	float m_lastTempo;
 
 	friend class Engine;
 	friend class SongEditor;

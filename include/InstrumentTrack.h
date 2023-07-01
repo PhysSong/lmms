@@ -55,7 +55,7 @@ class DataFile;
 class PluginView;
 class TabWidget;
 class TrackLabelButton;
-
+class InstrumentProcessHandle;
 
 class EXPORT InstrumentTrack : public Track, public MidiEventProcessor
 {
@@ -135,6 +135,8 @@ public:
 	virtual void saveTrackSpecificSettings( QDomDocument & _doc,
 							QDomElement & _parent );
 	virtual void loadTrackSpecificSettings( const QDomElement & _this );
+
+	virtual ProcessHandle * getProcessHandle();
 
 	using Track::setJournalling;
 
@@ -239,7 +241,7 @@ private:
 
 	IntModel m_baseNoteModel;
 
-	NotePlayHandleList m_processHandles;
+	NotePlayHandleList m_noteHandles;
 
 	FloatModel m_volumeModel;
 	FloatModel m_panningModel;
@@ -258,12 +260,13 @@ private:
 
 	Piano m_piano;
 
+	InstrumentProcessHandle * m_processHandle;
 
 	friend class InstrumentTrackView;
 	friend class InstrumentTrackWindow;
 	friend class NotePlayHandle;
 	friend class FlpImport;
-
+	friend class InstrumentProcessHandle;
 } ;
 
 
@@ -429,6 +432,22 @@ private:
 
 } ;
 
+
+class InstrumentProcessHandle : public ProcessHandle
+{
+	MM_OPERATORS
+public:
+	InstrumentProcessHandle( InstrumentTrack * it ) :
+	ProcessHandle( ProcessHandle::InstrumentProcessHandleType ),
+	m_track( it )
+	{ }
+	virtual ~InstrumentProcessHandle() {}
+
+	virtual void doProcessing();
+
+private:
+	InstrumentTrack * m_track;
+};
 
 
 #endif

@@ -46,8 +46,8 @@
 BBTrack::infoMap BBTrack::s_infoMap;
 
 
-BBTCO::BBTCO( Track * _track ) :
-	TrackContentObject( _track ),
+BBTCO::BBTCO( Track * _track, const MidiTime & pos ) :
+	TrackContentObject( _track, pos ),
 	m_color( 128, 128, 128 ),
 	m_useStyleColor( true )
 {
@@ -377,6 +377,11 @@ BBTrack::BBTrack( TrackContainer* tc ) :
 
 
 
+ProcessHandle * BBTrack::getProcessHandle()
+{
+	return NULL;
+}
+
 
 BBTrack::~BBTrack()
 {
@@ -457,7 +462,7 @@ TrackView * BBTrack::createView( TrackContainerView* tcv )
 
 TrackContentObject * BBTrack::createTCO( const MidiTime & _pos )
 {
-	BBTCO * bbtco = new BBTCO( this );
+	BBTCO * bbtco = new BBTCO( this, _pos );
 	if( s_lastTCOColor )
 	{
 		bbtco->setColor( *s_lastTCOColor );
@@ -503,11 +508,11 @@ void BBTrack::loadTrackSpecificSettings( const QDomElement & _this )
 		const int src = _this.attribute( "clonebbt" ).toInt();
 		const int dst = s_infoMap[this];
 		Engine::getBBTrackContainer()->createTCOsForBB( dst );
-		TrackContainer::TrackList tl =
+		TrackList tl =
 					Engine::getBBTrackContainer()->tracks();
 		// copy TCOs of all tracks from source BB (at bar "src") to destination
 		// TCOs (which are created if they do not exist yet)
-		for( TrackContainer::TrackList::iterator it = tl.begin();
+		for( TrackList::iterator it = tl.begin();
 							it != tl.end(); ++it )
 		{
 			( *it )->getTCO( src )->copy();

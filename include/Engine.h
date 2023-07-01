@@ -27,6 +27,7 @@
 #define ENGINE_H
 
 #include "lmmsconfig.h"
+#include "lmms_basics.h"
 #include "MemoryManager.h"
 
 #include <QtCore/QMap>
@@ -48,7 +49,7 @@ class Song;
 class SongEditor;
 class Ladspa2LMMS;
 class ControllerRackView;
-
+class TempoTrack;
 
 class EXPORT Engine
 {
@@ -148,15 +149,40 @@ public:
 		return s_controllerRackView;
 	}
 
+	static TempoTrack * tempoTrack()
+	{
+		return s_tempoTrack;
+	}
+
+	static void setTempoTrack( TempoTrack * tt )
+	{
+		s_tempoTrack = tt;
+	}
+
+	// returns value based on the tempo widget only, disregarding any automation
 	static float framesPerTick()
 	{
 		return s_framesPerTick;
 	}
+
+	// returns value from the tempo map, at given position
+	static float framesPerTick( tick_t position );
+	static float tempoAt( tick_t position );
+
+	// used to update the tempo-widget-based fpt value
 	static void updateFramesPerTick();
 
 	static const QMap<QString, QString> & pluginFileHandling()
 	{
 		return s_pluginFileHandling;
+	}
+
+	static float tempoToFramesPerTick( float tempo );
+
+	// returns the max polyphony for instruments
+	static inline int polyphony()
+	{
+		return 64; // TODO 2.0: make configurable in prefs
 	}
 
 
@@ -183,6 +209,7 @@ private:
 	static ProjectJournal * s_projectJournal;
 	static DummyTrackContainer * s_dummyTC;
 	static ControllerRackView * s_controllerRackView;
+	static TempoTrack * s_tempoTrack;
 
 	// GUI
 	static MainWindow * s_mainWindow;

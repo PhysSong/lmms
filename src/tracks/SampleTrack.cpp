@@ -49,8 +49,8 @@
 #include "ConfigManager.h"
 
 
-SampleTCO::SampleTCO( Track * _track ) :
-	TrackContentObject( _track ),
+SampleTCO::SampleTCO( Track * _track, const MidiTime & pos ) :
+	TrackContentObject( _track, pos ),
 	m_sampleBuffer( new SampleBuffer )
 {
 	saveJournallingState( false );
@@ -419,6 +419,11 @@ SampleTrack::~SampleTrack()
 }
 
 
+ProcessHandle * SampleTrack::getProcessHandle()
+{
+	return NULL;
+}
+
 
 
 bool SampleTrack::play( const MidiTime & _start, const fpp_t _frames,
@@ -476,9 +481,9 @@ TrackView * SampleTrack::createView( TrackContainerView* tcv )
 
 
 
-TrackContentObject * SampleTrack::createTCO( const MidiTime & )
+TrackContentObject * SampleTrack::createTCO( const MidiTime & pos )
 {
-	return new SampleTCO( this );
+	return new SampleTCO( this, pos );
 }
 
 

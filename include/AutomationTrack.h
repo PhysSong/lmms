@@ -29,12 +29,16 @@
 
 #include "Track.h"
 
+class AutomationProcessHandle;
+typedef QVector<QPointer<AutomatableModel> > objectVector;
+typedef QMap<int, float> TimeMap;
 
 class AutomationTrack : public Track
 {
 	Q_OBJECT
+	MM_OPERATORS
 public:
-	AutomationTrack( TrackContainer* tc, bool _hidden = false );
+	AutomationTrack( TrackContainer* tc, bool _hidden = false, bool tempo = false );
 	virtual ~AutomationTrack();
 
 	virtual bool play( const MidiTime & _start, const fpp_t _frames,
@@ -45,6 +49,11 @@ public:
 		return "automationtrack";
 	}
 
+	virtual QString defaultName() const
+	{
+		return tr( "Automation track" );
+	}
+
 	virtual TrackView * createView( TrackContainerView* );
 	virtual TrackContentObject * createTCO( const MidiTime & _pos );
 
@@ -52,9 +61,38 @@ public:
 							QDomElement & _parent );
 	virtual void loadTrackSpecificSettings( const QDomElement & _this );
 
+	virtual ProcessHandle * getProcessHandle();
+
+	void addObject( AutomatableModel * _obj, bool _search_dup = true );
+	void removeObject( AutomatableModel * obj );
+	const AutomatableModel * firstObject() const;
+	static void resolveAllIDs();
+	static bool isAutomated( const AutomatableModel * _m );
+
+	objectVector * objects()
+	{
+		return &m_objects;
+	}
+
+	virtual inline float getMin() const
+	{
+		return firstObject()->minValue<float>();
+	}
+
+	virtual inline float getMax() const
+	{
+		return firstObject()->maxValue<float>();
+	}
+
+public slots:
+	void objectDestroyed( jo_id_t );
+
 private:
 	friend class AutomationTrackView;
 
+	AutomationProcessHandle * m_processHandle;
+	objectVector m_objects;
+	QVector<jo_id_t> m_idsToResolve;
 } ;
 
 
@@ -69,6 +107,24 @@ public:
 	virtual void dropEvent( QDropEvent * _de );
 
 } ;
+
+
+// threadable processhandle for processing automation tracks
+class AutomationProcessHandle : public ProcessHandle
+{
+	MM_OPERATORS
+public:
+	AutomationProcessHandle( AutomationTrack * at ) :
+	ProcessHandle( ProcessHandle::AutomationProcessHandleType ),
+	m_track( at )
+	{ }
+	virtual ~AutomationProcessHandle() {}
+
+	virtual void doProcessing();
+
+private:
+	AutomationTrack * m_track;
+};
 
 
 #endif
