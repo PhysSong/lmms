@@ -295,8 +295,6 @@ public:
 		return false;
 	}
 
-	float globalAutomationValueAt( const TimePos& time );
-
 	void setStrictStepSize( const bool b )
 	{
 		m_hasStrictStepSize = b;

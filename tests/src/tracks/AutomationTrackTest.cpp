@@ -215,31 +215,6 @@ private slots:
 		QCOMPARE(song->automatedValuesAt(TimePos::ticksPerBar() + 5)[&model], 0.5f);
 	}
 
-	void testGlobalAutomation()
-	{
-		using namespace lmms;
-
-		// Global automation should not have priority, see https://github.com/LMMS/lmms/issues/4268
-		// Tests regression caused by 75077f6200a5aee3a5821aae48a3b8466ed8714a
-		auto song = Engine::getSong();
-
-		auto globalTrack = song->globalAutomationTrack();
-		AutomationClip globalClip(globalTrack);
-
-		AutomationTrack localTrack(song);
-		AutomationClip localClip(&localTrack);
-
-		FloatModel model;
-		globalClip.setProgressionType(AutomationClip::ProgressionType::Discrete);
-		localClip.setProgressionType(AutomationClip::ProgressionType::Discrete);
-		globalClip.addObject(&model);
-		localClip.addObject(&model);
-		globalClip.putValue(0, 100.0f, false);
-		localClip.putValue(0, 50.0f, false);
-
-		QCOMPARE(song->automatedValuesAt(0)[&model], 50.0f);
-	}
-
 };
 
 QTEST_GUILESS_MAIN(AutomationTrackTest)

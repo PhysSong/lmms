@@ -67,9 +67,6 @@ tick_t TimePos::s_ticksPerBar = DefaultTicksPerBar;
 
 Song::Song() :
 	TrackContainer(),
-	m_globalAutomationTrack( dynamic_cast<AutomationTrack *>(
-				Track::create( Track::Type::HiddenAutomation,
-								this ) ) ),
 	m_tempoModel( DefaultTempo, MinTempo, MaxTempo, this, tr( "Tempo" ) ),
 	m_timeSigModel( this ),
 	m_oldTicksPerBar( DefaultTicksPerBar ),
@@ -129,7 +126,6 @@ Song::Song() :
 Song::~Song()
 {
 	m_playing = false;
-	delete m_globalAutomationTrack;
 }
 
 
@@ -838,9 +834,7 @@ bpm_t Song::getTempo()
 
 AutomatedValueMap Song::automatedValuesAt(TimePos time, int clipNum) const
 {
-	auto trackList = TrackList{m_globalAutomationTrack};
-	trackList.insert(trackList.end(), tracks().begin(), tracks().end());
-	return TrackContainer::automatedValuesFromTracks(trackList, time, clipNum);
+	return TrackContainer::automatedValuesFromTracks(tracks(), time, clipNum);
 }
 
 
@@ -900,12 +894,6 @@ void Song::clearProject()
 
 	// Clear the m_oldAutomatedValues AutomatedValueMap
 	m_oldAutomatedValues.clear();
-
-	AutomationClip::globalAutomationClip( &m_tempoModel )->clear();
-	AutomationClip::globalAutomationClip( &m_masterVolumeModel )->
-									clear();
-	AutomationClip::globalAutomationClip( &m_masterPitchModel )->
-									clear();
 
 	Engine::audioEngine()->doneChangeInModel();
 
@@ -1079,12 +1067,6 @@ void Song::loadProject( const QString & fileName )
 
 	getTimeline(PlayMode::Song).setLoopEnabled(false);
 
-	if( !dataFile.content().firstChildElement( "track" ).isNull() )
-	{
-		m_globalAutomationTrack->restoreState( dataFile.content().
-						firstChildElement( "track" ) );
-	}
-
 	//Backward compatibility for LMMS <= 0.4.15
 	PeakController::initGetControllerBySetting();
 
@@ -1239,7 +1221,6 @@ bool Song::saveProjectFile(const QString & filename, bool withResources)
 
 	saveState( dataFile, dataFile.content() );
 
-	m_globalAutomationTrack->saveState( dataFile, dataFile.content() );
 	Engine::mixer()->saveState( dataFile, dataFile.content() );
 	if( getGUI() != nullptr )
 	{

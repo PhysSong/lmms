@@ -178,28 +178,6 @@ void AutomatableModel::saveSettings( QDomDocument& doc, QDomElement& element, co
 
 void AutomatableModel::loadSettings( const QDomElement& element, const QString& name )
 {
-	// compat code
-	QDomNode node = element.namedItem( AutomationClip::classNodeName() );
-	if( node.isElement() )
-	{
-		node = node.namedItem( name );
-		if( node.isElement() )
-		{
-			AutomationClip * p = AutomationClip::globalAutomationClip( this );
-			p->loadSettings( node.toElement() );
-			setValue( p->valueAt( 0 ) );
-			// in older projects we sometimes have odd automations
-			// with just one value in - eliminate if necessary
-			if( !p->hasAutomation() )
-			{
-				delete p;
-			}
-			return;
-		}
-		// logscales were not existing at this point of time
-		// so they can be ignored
-	}
-
 	QDomNode connectionNode = element.namedItem( "connection" );
 	// reads controller connection
 	if( connectionNode.isElement() )
@@ -230,7 +208,7 @@ void AutomatableModel::loadSettings( const QDomElement& element, const QString& 
 	// </ladspacontrols>
 	// element => there is automation data, or scaletype information
 
-	node = element.namedItem( name ); // maybe we have luck?
+	QDomNode node = element.namedItem( name ); // maybe we have luck?
 
 	// either: no node with name "name" found
 	//  => look for nodes with attribute name="nodename"
@@ -701,67 +679,6 @@ void AutomatableModel::setInitValue( const float value )
 void AutomatableModel::reset()
 {
 	setValue( initValue<float>() );
-}
-
-
-
-
-float AutomatableModel::globalAutomationValueAt( const TimePos& time )
-{
-	// get clips that connect to this model
-	auto clips = AutomationClip::clipsForModel(this);
-	if (clips.empty())
-	{
-		// if no such clips exist, return current value
-		return m_value;
-	}
-	else
-	{
-		// of those clips:
-		// find the clips which overlap with the time position
-		std::vector<AutomationClip*> clipsInRange;
-		for (const auto& clip : clips)
-		{
-			int s = clip->startPosition();
-			int e = clip->endPosition();
-			if (s <= time && e >= time) { clipsInRange.push_back(clip); }
-		}
-
-		AutomationClip * latestClip = nullptr;
-
-		if (!clipsInRange.empty())
-		{
-			// if there are more than one overlapping clips, just use the first one because
-			// multiple clip behaviour is undefined anyway
-			latestClip = clipsInRange[0];
-		}
-		else
-		// if we find no clips at the exact time, we need to search for the last clip before time and use that
-		{
-			int latestPosition = 0;
-
-			for (const auto& clip : clips)
-			{
-				int e = clip->endPosition();
-				if (e <= time && e > latestPosition)
-				{
-					latestPosition = e;
-					latestClip = clip;
-				}
-			}
-		}
-
-		if( latestClip )
-		{
-			// scale/fit the value appropriately and return it
-			const float value = latestClip->valueAt( time - latestClip->startPosition() );
-			const float scaled_value = scaledValue( value );
-			return fittedValue( scaled_value );
-		}
-		// if we still find no clip, the value at that time is undefined so
-		// just return current value as the best we can do
-		else return m_value;
-	}
 }
 
 void AutomatableModel::setUseControllerValue(bool b)

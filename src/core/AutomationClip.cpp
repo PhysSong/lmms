@@ -1040,29 +1040,6 @@ std::vector<AutomationClip *> AutomationClip::clipsForModel(const AutomatableMod
 
 
 
-AutomationClip * AutomationClip::globalAutomationClip(
-							AutomatableModel * _m )
-{
-	AutomationTrack * t = Engine::getSong()->globalAutomationTrack();
-	for (const auto& clip : t->getClips())
-	{
-		auto a = dynamic_cast<AutomationClip*>(clip);
-		if( a )
-		{
-			for (const auto& object : a->m_objects)
-			{
-				if (object == _m) { return a; }
-			}
-		}
-	}
-
-	auto a = new AutomationClip(t);
-	a->addObject( _m, false );
-	return a;
-}
-
-
-
 
 void AutomationClip::resolveAllIDs()
 {
@@ -1251,7 +1228,6 @@ std::vector<Track*> AutomationClip::combineAllTracks()
 
 	combinedTrackList.insert(combinedTrackList.end(), songTracks.begin(), songTracks.end());
 	combinedTrackList.insert(combinedTrackList.end(), patternStoreTracks.begin(), patternStoreTracks.end());
-	combinedTrackList.push_back(Engine::getSong()->globalAutomationTrack());
 
 	return combinedTrackList;
 }

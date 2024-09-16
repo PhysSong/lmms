@@ -46,9 +46,6 @@ void MeterModel::reset()
 {
 	m_numeratorModel.setValue( 4 );
 	m_denominatorModel.setValue( 4 );
-
-	AutomationClip::globalAutomationClip( &m_numeratorModel )->clear();
-	AutomationClip::globalAutomationClip( &m_denominatorModel )->clear();
 }
 
 

@@ -288,11 +288,6 @@ public:
 
 	bpm_t getTempo();
 
-	AutomationTrack * globalAutomationTrack()
-	{
-		return m_globalAutomationTrack;
-	}
-
 	//TODO: Add Q_DECL_OVERRIDE when Qt4 is dropped
 	AutomatedValueMap automatedValuesAt(TimePos time, int clipNum = -1) const override;
 
@@ -456,8 +451,6 @@ private:
 	void setModified(bool value);
 
 	void setProjectFileName(QString const & projectFileName);
-
-	AutomationTrack * m_globalAutomationTrack;
 
 	IntModel m_tempoModel;
 	MeterModel m_timeSigModel;
