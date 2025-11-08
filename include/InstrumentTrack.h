@@ -150,6 +150,11 @@ public:
 		return &m_audioBusHandle;
 	}
 
+	const AudioBusHandle* audioBusHandle() const
+	{
+		return &m_audioBusHandle;
+	}
+
 	MidiPort * midiPort()
 	{
 		return &m_midiPort;

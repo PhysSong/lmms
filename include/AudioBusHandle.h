@@ -72,6 +72,7 @@ public:
 	void setName(const QString& newName);
 
 	EffectChain* effects() { return m_effects.get(); }
+	const EffectChain* effects() const { return m_effects.get(); }
 	bool processEffects();
 
 	// ThreadableJob stuff

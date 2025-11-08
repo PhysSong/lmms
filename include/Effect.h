@@ -224,9 +224,9 @@ private:
 	FloatModel m_wetDryModel;
 	TempoSyncKnobModel m_autoQuitModel;
 
-	int m_latency;
-
 	bool m_autoQuitEnabled = false;
+
+	int m_latency = 0;
 
 	friend class gui::EffectView;
 	friend class EffectChain;

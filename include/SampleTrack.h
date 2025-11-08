@@ -68,6 +68,11 @@ public:
 		return &m_audioBusHandle;
 	}
 
+	inline const AudioBusHandle* audioBusHandle() const
+	{
+		return &m_audioBusHandle;
+	}
+
 	QString nodeName() const override
 	{
 		return "sampletrack";
